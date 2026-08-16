@@ -118,6 +118,7 @@ const projects = [
     year: '2026',
     role: 'Design / Production',
     image: '/assets/project-07.png?v=20260814-07',
+    video: '/assets/VIDEO01.mp4',
     tools: 'SEEDANCE2.0',
     description: `项目核心是一场古装暖阁中的双人正反打对手戏。
 
@@ -132,6 +133,7 @@ const projects = [
     year: '2026',
     role: 'Design / Production',
     image: '/assets/project-08.png?v=20260814-08',
+    video: '/assets/VIDEO02.mp4',
     tools: 'LTX2.3',
     description: '项目通过 AI 图生视频 + 影视工业化分镜流程 完成制作，将剧本拆解为可控的短视频单元，并精确设计人物一致性、镜头运动、表演动作、光影、音效与前后镜头衔接，形成一套较完整的 AI 短剧制作工作流。',
   },
@@ -1227,7 +1229,6 @@ function SignalModel({ navigate }) {
       }
 
       function hydrateMirrorVideoTexture(material) {
-        return;
         scheduleDeferredJob(() => {
           if (!alive) return;
           const video = document.createElement('video');
