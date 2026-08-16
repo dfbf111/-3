@@ -719,7 +719,7 @@ function SignalModel({ navigate }) {
       try {
         const Renderer = THREE.WebGLRenderer || THREE.WebGL1Renderer;
         renderer = new Renderer({ alpha: true, antialias: true });
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        renderer.setPixelRatio(1);
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
         renderer.toneMappingExposure = renderTuneRef.current.exposure;
@@ -802,7 +802,7 @@ function SignalModel({ navigate }) {
         tiltX: 0.018,
         tiltZ: 0.026,
       };
-      const fixedModelStage = { width: 2048, height: 1152 };
+      const fixedModelStage = { width: 1600, height: 900 };
 
       async function loadHdrEnvironment() {
         try {
@@ -1237,8 +1237,9 @@ function SignalModel({ navigate }) {
           video.loop = true;
           video.autoplay = true;
           video.playsInline = true;
-          video.preload = 'metadata';
+          video.preload = 'auto';
           video.crossOrigin = 'anonymous';
+          video.setAttribute('webkit-playsinline', '');
 
           const texture = new THREE.VideoTexture(video);
           texture.colorSpace = THREE.SRGBColorSpace;
