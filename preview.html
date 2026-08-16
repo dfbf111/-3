@@ -1,0 +1,1534 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ARCHI - Local Preview</title>
+    <script>
+      if (location.protocol === 'file:') {
+        location.replace(`http://127.0.0.1:8080/preview.html${location.hash || '#home'}`);
+      }
+    </script>
+    <link rel="stylesheet" href="src/styles.css?v=20260812-fixed-model-stage" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "./public/vendor/three/three.module.js",
+          "three/addons/": "./public/vendor/three/addons/"
+        }
+      }
+    </script>
+    <style>
+      .signal-model {
+        --model-screen-offset-x: 0vw;
+        --model-screen-offset-y: 0vh;
+      }
+
+      .preview-page {
+        display: none;
+      }
+
+      .signal-model__viewer::before {
+        content: attr(data-status);
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        color: #999;
+        font: 600 14px/1 Arial, sans-serif;
+      }
+
+      .signal-model__viewer.is-ready::before {
+        display: none;
+      }
+
+      .preview-page.is-active {
+        display: block;
+      }
+
+      .preview-hidden {
+        display: none !important;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app app--home" id="app">
+      <section class="home-page page-shell preview-page is-active" data-page="home" aria-label="Home">
+        <header class="home-identity reveal">
+          <p>CREATIVE PORTFOLIO</p>
+          <h1>ARCHI</h1>
+        </header>
+
+        <dl class="home-meta reveal reveal--delay">
+          <div>
+            <dt>Theme</dt>
+            <dd>LIGHT/DARK MODE</dd>
+          </div>
+          <div>
+            <dt>Focus</dt>
+            <dd>Creative Development / Motion / 3D Modeling / AIGC</dd>
+          </div>
+          <div>
+            <dt>Index</dt>
+            <dd>Portfolio 2026</dd>
+          </div>
+        </dl>
+
+        <div class="signal-model reveal reveal--delay" aria-label="Interactive portfolio model">
+          <div class="signal-model__viewer" id="threeModel">
+            <button class="model-hotspot model-hotspot--about" type="button" data-go="about">About</button>
+            <button class="model-hotspot model-hotspot--projects" type="button" data-go="projects">
+              <span class="visually-hidden">Projects</span>
+            </button>
+            <button class="model-hotspot model-hotspot--contact" type="button" data-go="contact">Contact</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="projects-page preview-page" data-page="projects" aria-label="Projects">
+        <div class="projects-gridzoom">
+          <header class="projects-gridzoom__header">
+            <button class="back-circle-control" type="button" aria-label="Back" data-go="home">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6.5 8.5 12l5.5 5.5" /></svg>
+            </button>
+          </header>
+          <div class="projects-gridzoom__intro reveal">
+            <p>Projects</p>
+            <h1>
+              <span>Projects that explore</span>
+              <span>design, motion, 3D, and</span>
+              <span>interactive front-end</span>
+              <span>development.</span>
+            </h1>
+          </div>
+          <div class="projects-gl-gallery">
+            <div class="projects-marquee">
+              <div class="projects-marquee__track">
+                <div class="projects-marquee__set" id="projectTrack"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="projects-zoom preview-hidden" id="projectDetail" aria-label="Project detail"></section>
+
+      <section class="about-page page-shell preview-page" data-page="about" aria-label="About">
+        <header class="page-shell__header">
+          <span></span>
+          <div class="about-language-toggle" aria-label="Language">
+            <button type="button" aria-pressed="true">EN</button>
+            <button type="button" aria-pressed="false">JA</button>
+          </div>
+        </header>
+        <div class="about-page__content reveal" lang="en">
+          <div class="page-shell__intro">
+            <p>About</p>
+            <h1>Creative developer building interactive web experiences.</h1>
+          </div>
+          <div class="about-page__body">
+            <p>
+              I design and implement digital experiences that naturally connect motion, WebGL, 3D modeling, and
+              interface behavior. I specialize in interactive front-end development that brings visual expression and a
+              tactile sense of interaction together.
+            </p>
+            <dl class="about-page__meta">
+              <div>
+                <dt>Name</dt>
+                <dd>ARCHI</dd>
+              </div>
+              <div>
+                <dt>Role</dt>
+                <dd>CREATIVE PORTFOLIO</dd>
+              </div>
+              <div>
+                <dt>Contact</dt>
+                <dd class="about-page__contact-links">
+                  <a href="mailto:hello@hirotos.com"><span>hello@hirotos.com</span><span>Open</span></a>
+                  <a href="https://www.linkedin.com/in/hiroto-sato-2414b23b7"><span>LinkedIn</span><span>Open</span></a>
+                </dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+      </section>
+
+      <section class="contact-page page-shell preview-page" data-page="contact" aria-label="Contact">
+        <div class="contact-page__content reveal">
+          <div class="page-shell__intro">
+            <p>Contact</p>
+            <h1>Get in touch.</h1>
+          </div>
+          <div class="contact-page__body">
+            <div class="contact-page__links" aria-label="Contact links">
+              <a href="mailto:hello@hirotos.com"><span>hello@hirotos.com</span><span>Open</span></a>
+              <a href="https://www.linkedin.com/in/hiroto-sato-2414b23b7"><span>LinkedIn</span><span>Open</span></a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <button class="back-circle-control preview-hidden" id="globalBack" type="button" aria-label="Back" data-go="home">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 6.5 8.5 12l5.5 5.5" /></svg>
+      </button>
+
+      <nav class="site-nav" aria-label="Primary" id="siteNav">
+        <button type="button" data-go="home">home</button>
+        <button type="button" data-go="projects">projects</button>
+        <button type="button" data-go="about">about</button>
+        <button type="button" data-go="contact">contact</button>
+      </nav>
+    </main>
+
+    <div class="model-tuner" id="modelTuner" aria-label="Model tuning controls">
+      <div class="model-tuner__head">
+        <span>Model Tune</span>
+        <button type="button" data-reset-tune>Reset</button>
+      </div>
+      <label class="model-tuner__row"><span>Angle</span><input type="range" min="-3.14" max="3.14" step="0.01" value="-0.36" data-tune="spinOffset"><output>-0.36</output></label>
+      <label class="model-tuner__row"><span>Scale</span><input type="range" min="4" max="30" step="0.1" value="10.1" data-tune="scale"><output>10.10</output></label>
+      <label class="model-tuner__row"><span>Cam Y</span><input type="range" min="-40" max="10" step="0.1" value="10" data-tune="cameraY"><output>10.00</output></label>
+      <label class="model-tuner__row"><span>Cam Z</span><input type="range" min="0" max="60" step="0.1" value="13" data-tune="cameraZ"><output>13.00</output></label>
+      <label class="model-tuner__row"><span>Lens</span><input type="range" min="30" max="240" step="1" value="30" data-tune="focalLength"><output>30</output></label>
+      <label class="model-tuner__row"><span>Left</span><input type="range" min="-80" max="80" step="0.5" value="0" data-tune="left"><output>0.00</output></label>
+      <label class="model-tuner__row"><span>Bottom</span><input type="range" min="-80" max="80" step="0.5" value="-29" data-tune="bottom"><output>-29.00</output></label>
+    </div>
+
+    <div class="text-tuner" id="textTuner" aria-label="Text layout tuning controls">
+      <div class="text-tuner__head">
+        <span>Text Tune</span>
+        <button type="button" data-reset-text-tune>Reset</button>
+      </div>
+    </div>
+
+    <div class="render-tuner" id="renderTuner" aria-label="Render tuning controls">
+      <div class="render-tuner__head">
+        <span>Render Tune</span>
+        <button type="button" data-reset-render-tune>Reset</button>
+      </div>
+    </div>
+
+    <div class="blue-text-tuner" id="blueTextTuner" aria-label="Blue sign text tuning controls">
+      <div class="blue-text-tuner__head">
+        <span>Blue Text Tune</span>
+        <button type="button" data-reset-blue-text-tune>Reset</button>
+      </div>
+    </div>
+
+    <div class="contact-text-tuner" id="contactTextTuner" aria-label="Contact ball text tuning controls">
+      <div class="contact-text-tuner__head">
+        <span>Contact Text Tune</span>
+        <button type="button" data-reset-contact-text-tune>Reset</button>
+      </div>
+    </div>
+
+    <div class="about-pattern-tuner" id="aboutPatternTuner" aria-label="About triangle pattern tuning controls">
+      <div class="about-pattern-tuner__head">
+        <span>About Pattern Tune</span>
+        <button type="button" data-reset-about-pattern-tune>Reset</button>
+      </div>
+    </div>
+
+    <div class="project-cursor-badge" id="projectCursorBadge" aria-hidden="true">
+      <span>项目档案</span>
+      <svg viewBox="0 0 36 18" focusable="false"><path d="M1 9h30M23 2l8 7-8 7" /></svg>
+    </div>
+    <div class="contact-cursor-badge" id="contactCursorBadge" aria-hidden="true">
+      <span>联系</span>
+      <svg viewBox="0 0 36 18" focusable="false"><path d="M1 9h30M23 2l8 7-8 7" /></svg>
+    </div>
+    <div class="about-cursor-badge" id="aboutCursorBadge" aria-hidden="true">
+      <span>关于我</span>
+      <svg viewBox="0 0 36 18" focusable="false"><path d="M1 9h30M23 2l8 7-8 7" /></svg>
+    </div>
+
+    <script>
+      const projects = [
+        ['Signal Pole', 'Interactive Installation', '2026', 'Creative Direction / Development', 'public/assets/project-01.png'],
+        ['Orbital Type', 'WebGL Typography', '2026', 'Frontend / Motion', 'public/assets/project-02.png'],
+        ['Soft Machine', 'Generative System', '2025', 'Design Engineering', 'public/assets/project-03.png'],
+        ['Liquid Index', 'Digital Archive', '2025', 'Interaction Design', 'public/assets/project-04.png'],
+        ['Glass Rig', '3D Prototype', '2024', '3D / React', 'public/assets/project-05.png'],
+        ['After Image', 'Portfolio System', '2024', 'Development', 'public/assets/project-06.png'],
+      ];
+
+      const signalTuneDefaults = {
+        spinOffset: -0.36,
+        scale: 10.1,
+        cameraY: 10,
+        cameraZ: 13,
+        focalLength: 30,
+        left: 0,
+        bottom: -29,
+      };
+
+      const signalTuneControls = [
+        ['spinOffset', 'Angle', -3.14, 3.14, 0.01],
+        ['scale', 'Scale', 4, 30, 0.1],
+        ['cameraY', 'Cam Y', -40, 10, 0.1],
+        ['cameraZ', 'Cam Z', 0, 60, 0.1],
+        ['focalLength', 'Lens', 30, 240, 1],
+        ['left', 'Left', -80, 80, 0.5],
+        ['bottom', 'Bottom', -80, 80, 0.5],
+      ];
+
+      function readSignalTune() {
+        return { ...signalTuneDefaults };
+      }
+
+      let signalTune = readSignalTune();
+      window.__signalTune = signalTune;
+
+      const renderTuneDefaults = {
+        exposure: 0.92,
+        envMapIntensity: 0.75,
+        envLight: 0.45,
+        keyLight: 0.85,
+        rimLight: 0.8,
+        fillLight: 0.03,
+        fog: 0,
+      };
+
+      const renderTuneControls = [
+        ['exposure', 'Exposure', 0.4, 2.2, 0.01],
+        ['envMapIntensity', 'HDR', 0, 1.5, 0.01],
+        ['envLight', 'Env', 0, 4, 0.01],
+        ['keyLight', 'Key', 0, 5, 0.01],
+        ['rimLight', 'Rim', 0, 5, 0.01],
+        ['fillLight', 'Fill', 0, 3, 0.01],
+        ['fog', 'Fog', 0, 0.04, 0.001],
+      ];
+
+      function readRenderTune() {
+        return { ...renderTuneDefaults };
+      }
+
+      let renderTune = readRenderTune();
+      window.__renderTune = renderTune;
+
+      const blueTextTuneDefaults = {
+        size: 41,
+        centerY: 51,
+        scaleX: 143,
+        gap: 109,
+        speed: 100,
+      };
+
+      const blueTextTuneControls = [
+        ['size', 'Size', 30, 120, 1],
+        ['centerY', 'UpDown', 20, 80, 0.5],
+        ['scaleX', 'Width', 20, 180, 1],
+        ['gap', 'Gap', 0, 360, 1],
+        ['speed', 'Speed', -220, 220, 1],
+      ];
+
+      function readBlueTextTune() {
+        return { ...blueTextTuneDefaults };
+      }
+
+      let blueTextTune = readBlueTextTune();
+      window.__blueTextTune = blueTextTune;
+
+      const contactTextTuneDefaults = {
+        dot: 17,
+        x: 50,
+        y: 483,
+        gap: 6,
+        letterGap: 10,
+      };
+
+      const contactTextTuneControls = [
+        ['dot', 'Size', 6, 32, 1],
+        ['x', 'Left', 10, 90, 0.5],
+        ['y', 'UpDown', 220, 720, 1],
+        ['gap', 'DotGap', 0, 18, 1],
+        ['letterGap', 'Letter', 0, 40, 1],
+      ];
+
+      function readContactTextTune() {
+        return { ...contactTextTuneDefaults };
+      }
+
+      let contactTextTune = readContactTextTune();
+      window.__contactTextTune = contactTextTune;
+
+      const aboutPatternTuneDefaults = {
+        scale: 68,
+        x: 17,
+        y: 183,
+        rotate: 90,
+        opacity: 100,
+      };
+
+      const aboutPatternTuneStorageKey = 'about-pattern-tune-v4-centered-logo';
+
+      const aboutPatternTuneControls = [
+        ['scale', 'Size', 35, 180, 1],
+        ['x', 'Left', -360, 360, 1],
+        ['y', 'UpDown', -360, 360, 1],
+        ['rotate', 'Angle', -180, 180, 1],
+        ['opacity', 'Opacity', 0, 100, 1],
+      ];
+
+      function readAboutPatternTune() {
+        return { ...aboutPatternTuneDefaults };
+      }
+
+      let aboutPatternTune = readAboutPatternTune();
+      window.__aboutPatternTune = aboutPatternTune;
+
+      function renderTunePanel() {
+        const tuner = document.querySelector('#modelTuner');
+        const reset = tuner.querySelector('[data-reset-tune]');
+        signalTuneControls.forEach(([key, label, min, max, step]) => {
+          let input = tuner.querySelector(`[data-tune="${key}"]`);
+          if (!input) {
+            const row = document.createElement('label');
+            row.className = 'model-tuner__row';
+            row.innerHTML = `
+              <span>${label}</span>
+              <input type="range" min="${min}" max="${max}" step="${step}" value="${signalTune[key]}" data-tune="${key}">
+              <output>${Number(signalTune[key]).toFixed(step < 1 ? 2 : 0)}</output>
+            `;
+            tuner.appendChild(row);
+            input = row.querySelector('input');
+          }
+          input.value = signalTune[key];
+          input.nextElementSibling.textContent = Number(signalTune[key]).toFixed(step < 1 ? 2 : 0);
+        });
+        tuner.addEventListener('input', (event) => {
+          const key = event.target.dataset.tune;
+          if (!key) return;
+          signalTune = { ...signalTune, [key]: Number(event.target.value) };
+          event.target.nextElementSibling.textContent = Number(signalTune[key]).toFixed(Number(event.target.step) < 1 ? 2 : 0);
+          localStorage.setItem('signal-model-tune', JSON.stringify(signalTune));
+          window.dispatchEvent(new CustomEvent('signal-model:tune', { detail: signalTune }));
+        });
+        reset.addEventListener('click', () => {
+          signalTune = { ...signalTuneDefaults };
+          localStorage.removeItem('signal-model-tune');
+          tuner.querySelectorAll('[data-tune]').forEach((input) => {
+            input.value = signalTune[input.dataset.tune];
+            input.nextElementSibling.textContent = Number(input.value).toFixed(Number(input.step) < 1 ? 2 : 0);
+          });
+          window.dispatchEvent(new CustomEvent('signal-model:tune', { detail: signalTune }));
+        });
+      }
+
+      renderTunePanel();
+
+      function renderRenderTunePanel() {
+        const tuner = document.querySelector('#renderTuner');
+        const reset = tuner.querySelector('[data-reset-render-tune]');
+        renderTuneControls.forEach(([key, label, min, max, step]) => {
+          const row = document.createElement('label');
+          row.className = 'render-tuner__row';
+          row.innerHTML = `
+            <span>${label}</span>
+            <input type="range" min="${min}" max="${max}" step="${step}" value="${renderTune[key]}" data-render-tune="${key}">
+            <output>${Number(renderTune[key]).toFixed(step < 0.01 ? 3 : 2)}</output>
+          `;
+          tuner.appendChild(row);
+        });
+        tuner.addEventListener('input', (event) => {
+          const key = event.target.dataset.renderTune;
+          if (!key) return;
+          renderTune = { ...renderTune, [key]: Number(event.target.value) };
+          event.target.nextElementSibling.textContent = Number(renderTune[key]).toFixed(Number(event.target.step) < 0.01 ? 3 : 2);
+          localStorage.setItem('signal-render-tune', JSON.stringify(renderTune));
+          window.dispatchEvent(new CustomEvent('signal-render:tune', { detail: renderTune }));
+        });
+        reset.addEventListener('click', () => {
+          renderTune = { ...renderTuneDefaults };
+          localStorage.removeItem('signal-render-tune');
+          tuner.querySelectorAll('[data-render-tune]').forEach((input) => {
+            input.value = renderTune[input.dataset.renderTune];
+            input.nextElementSibling.textContent = Number(input.value).toFixed(Number(input.step) < 0.01 ? 3 : 2);
+          });
+          window.dispatchEvent(new CustomEvent('signal-render:tune', { detail: renderTune }));
+        });
+      }
+
+      renderRenderTunePanel();
+
+      function renderBlueTextTunePanel() {
+        const tuner = document.querySelector('#blueTextTuner');
+        const reset = tuner.querySelector('[data-reset-blue-text-tune]');
+        blueTextTuneControls.forEach(([key, label, min, max, step]) => {
+          const row = document.createElement('label');
+          row.className = 'blue-text-tuner__row';
+          row.innerHTML = `
+            <span>${label}</span>
+            <input type="range" min="${min}" max="${max}" step="${step}" value="${blueTextTune[key]}" data-blue-text-tune="${key}">
+            <output>${Number(blueTextTune[key]).toFixed(step < 1 ? 1 : 0)}</output>
+          `;
+          tuner.appendChild(row);
+        });
+        tuner.addEventListener('input', (event) => {
+          const key = event.target.dataset.blueTextTune;
+          if (!key) return;
+          blueTextTune = { ...blueTextTune, [key]: Number(event.target.value) };
+          event.target.nextElementSibling.textContent = Number(blueTextTune[key]).toFixed(Number(event.target.step) < 1 ? 1 : 0);
+          localStorage.setItem('blue-text-tune', JSON.stringify(blueTextTune));
+          window.dispatchEvent(new CustomEvent('blue-text:tune', { detail: blueTextTune }));
+        });
+        reset.addEventListener('click', () => {
+          blueTextTune = { ...blueTextTuneDefaults };
+          localStorage.removeItem('blue-text-tune');
+          tuner.querySelectorAll('[data-blue-text-tune]').forEach((input) => {
+            input.value = blueTextTune[input.dataset.blueTextTune];
+            input.nextElementSibling.textContent = Number(input.value).toFixed(Number(input.step) < 1 ? 1 : 0);
+          });
+          window.dispatchEvent(new CustomEvent('blue-text:tune', { detail: blueTextTune }));
+        });
+      }
+
+      renderBlueTextTunePanel();
+
+      function renderContactTextTunePanel() {
+        const tuner = document.querySelector('#contactTextTuner');
+        const reset = tuner.querySelector('[data-reset-contact-text-tune]');
+        contactTextTuneControls.forEach(([key, label, min, max, step]) => {
+          const row = document.createElement('label');
+          row.className = 'contact-text-tuner__row';
+          row.innerHTML = `
+            <span>${label}</span>
+            <input type="range" min="${min}" max="${max}" step="${step}" value="${contactTextTune[key]}" data-contact-text-tune="${key}">
+            <output>${Number(contactTextTune[key]).toFixed(step < 1 ? 1 : 0)}</output>
+          `;
+          tuner.appendChild(row);
+        });
+        tuner.addEventListener('input', (event) => {
+          const key = event.target.dataset.contactTextTune;
+          if (!key) return;
+          contactTextTune = { ...contactTextTune, [key]: Number(event.target.value) };
+          event.target.nextElementSibling.textContent = Number(contactTextTune[key]).toFixed(Number(event.target.step) < 1 ? 1 : 0);
+          localStorage.setItem('contact-text-tune', JSON.stringify(contactTextTune));
+          window.dispatchEvent(new CustomEvent('contact-text:tune', { detail: contactTextTune }));
+        });
+        reset.addEventListener('click', () => {
+          contactTextTune = { ...contactTextTuneDefaults };
+          localStorage.removeItem('contact-text-tune');
+          tuner.querySelectorAll('[data-contact-text-tune]').forEach((input) => {
+            input.value = contactTextTune[input.dataset.contactTextTune];
+            input.nextElementSibling.textContent = Number(input.value).toFixed(Number(input.step) < 1 ? 1 : 0);
+          });
+          window.dispatchEvent(new CustomEvent('contact-text:tune', { detail: contactTextTune }));
+        });
+      }
+
+      renderContactTextTunePanel();
+
+      function renderAboutPatternTunePanel() {
+        const tuner = document.querySelector('#aboutPatternTuner');
+        const reset = tuner.querySelector('[data-reset-about-pattern-tune]');
+        aboutPatternTuneControls.forEach(([key, label, min, max, step]) => {
+          const row = document.createElement('label');
+          row.className = 'about-pattern-tuner__row';
+          row.innerHTML = `
+            <span>${label}</span>
+            <input type="range" min="${min}" max="${max}" step="${step}" value="${aboutPatternTune[key]}" data-about-pattern-tune="${key}">
+            <output>${Number(aboutPatternTune[key]).toFixed(0)}</output>
+          `;
+          tuner.appendChild(row);
+        });
+        tuner.addEventListener('input', (event) => {
+          const key = event.target.dataset.aboutPatternTune;
+          if (!key) return;
+          aboutPatternTune = { ...aboutPatternTune, [key]: Number(event.target.value) };
+          event.target.nextElementSibling.textContent = Number(aboutPatternTune[key]).toFixed(0);
+          localStorage.setItem(aboutPatternTuneStorageKey, JSON.stringify(aboutPatternTune));
+          window.dispatchEvent(new CustomEvent('about-pattern:tune', { detail: aboutPatternTune }));
+        });
+        reset.addEventListener('click', () => {
+          aboutPatternTune = { ...aboutPatternTuneDefaults };
+          localStorage.removeItem(aboutPatternTuneStorageKey);
+          tuner.querySelectorAll('[data-about-pattern-tune]').forEach((input) => {
+            input.value = aboutPatternTune[input.dataset.aboutPatternTune];
+            input.nextElementSibling.textContent = Number(input.value).toFixed(0);
+          });
+          window.dispatchEvent(new CustomEvent('about-pattern:tune', { detail: aboutPatternTune }));
+        });
+      }
+
+      renderAboutPatternTunePanel();
+
+      const textTuneDefaults = {
+        titleX: 44,
+        titleY: 46,
+        eyebrowSize: 14,
+        nameSize: 56,
+        navX: 37,
+        navY: 36,
+        navGap: 7,
+        navSize: 13,
+        metaX: 40,
+        metaY: 33,
+        metaWidth: 656,
+        metaGap: 25,
+        metaSize: 12,
+      };
+
+      const textTuneControls = [
+        ['titleX', 'Title X', 0, 140, 1],
+        ['titleY', 'Title Y', 0, 120, 1],
+        ['eyebrowSize', 'Small Size', 10, 22, 0.5],
+        ['nameSize', 'Name Size', 36, 92, 1],
+        ['navX', 'Nav X', 20, 140, 1],
+        ['navY', 'Nav Y', 0, 120, 1],
+        ['navGap', 'Nav Gap', 0, 24, 1],
+        ['navSize', 'Nav Size', 10, 22, 0.5],
+        ['metaX', 'Meta X', 0, 140, 1],
+        ['metaY', 'Meta Y', 10, 140, 1],
+        ['metaWidth', 'Meta Width', 420, 980, 1],
+        ['metaGap', 'Meta Gap', 0, 80, 1],
+        ['metaSize', 'Meta Size', 10, 20, 0.5],
+      ];
+
+      const textTuneVars = {
+        titleX: '--text-title-x',
+        titleY: '--text-title-y',
+        eyebrowSize: '--text-eyebrow-size',
+        nameSize: '--text-name-size',
+        navX: '--text-nav-x',
+        navY: '--text-nav-y',
+        navGap: '--text-nav-gap',
+        navSize: '--text-nav-size',
+        metaX: '--text-meta-x',
+        metaY: '--text-meta-y',
+        metaWidth: '--text-meta-width',
+        metaGap: '--text-meta-gap',
+        metaSize: '--text-meta-size',
+      };
+
+      function readTextTune() {
+        return { ...textTuneDefaults };
+      }
+
+      let textTune = readTextTune();
+
+      function applyTextTune(next = textTune) {
+        Object.entries(textTuneVars).forEach(([key, variable]) => {
+          document.documentElement.style.setProperty(variable, `${next[key]}px`);
+        });
+      }
+
+      function renderTextTunePanel() {
+        const tuner = document.querySelector('#textTuner');
+        const reset = tuner.querySelector('[data-reset-text-tune]');
+        textTuneControls.forEach(([key, label, min, max, step]) => {
+          const row = document.createElement('label');
+          row.className = 'text-tuner__row';
+          row.innerHTML = `
+            <span>${label}</span>
+            <input type="range" min="${min}" max="${max}" step="${step}" value="${textTune[key]}" data-text-tune="${key}">
+            <output>${Number(textTune[key]).toFixed(step < 1 ? 1 : 0)}</output>
+          `;
+          tuner.appendChild(row);
+        });
+        tuner.addEventListener('input', (event) => {
+          const key = event.target.dataset.textTune;
+          if (!key) return;
+          textTune = { ...textTune, [key]: Number(event.target.value) };
+          event.target.nextElementSibling.textContent = Number(textTune[key]).toFixed(Number(event.target.step) < 1 ? 1 : 0);
+          localStorage.setItem('text-layout-tune', JSON.stringify(textTune));
+          applyTextTune(textTune);
+        });
+        reset.addEventListener('click', () => {
+          textTune = { ...textTuneDefaults };
+          localStorage.removeItem('text-layout-tune');
+          tuner.querySelectorAll('[data-text-tune]').forEach((input) => {
+            input.value = textTune[input.dataset.textTune];
+            input.nextElementSibling.textContent = Number(input.value).toFixed(Number(input.step) < 1 ? 1 : 0);
+          });
+          applyTextTune(textTune);
+        });
+      }
+
+      renderTextTunePanel();
+      applyTextTune();
+
+      const app = document.querySelector('#app');
+      const nav = document.querySelector('#siteNav');
+      const back = document.querySelector('#globalBack');
+      const detail = document.querySelector('#projectDetail');
+      const track = document.querySelector('#projectTrack');
+
+      function iconPath(close) {
+        return close ? 'm7 7 10 10M17 7 7 17' : 'M14 6.5 8.5 12l5.5 5.5';
+      }
+
+      function go(page) {
+        detail.classList.add('preview-hidden');
+        document.querySelectorAll('.preview-page').forEach((section) => {
+          section.classList.toggle('is-active', section.dataset.page === page);
+        });
+        nav.querySelectorAll('button').forEach((button) => {
+          if (button.dataset.go === page) {
+            button.setAttribute('aria-current', 'page');
+          } else {
+            button.removeAttribute('aria-current');
+          }
+        });
+        app.className = `app app--${page}`;
+        nav.classList.toggle('preview-hidden', page !== 'home' && page !== 'projects' && page !== 'about' && page !== 'contact');
+        back.classList.toggle('preview-hidden', page === 'home' || page === 'projects');
+        history.replaceState(null, '', `#${page}`);
+      }
+
+      function renderDetail(project) {
+        const [title, category, year, role, image] = project;
+        detail.innerHTML = `
+          <header class="projects-zoom__header">
+            <button class="back-circle-control" type="button" aria-label="Close project" id="closeDetail">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="${iconPath(true)}"></path></svg>
+            </button>
+          </header>
+          <div class="projects-zoom__content reveal">
+            <span>${category}</span>
+            <h2>${title}</h2>
+            <p>A tactile portfolio study shaped around quiet typography, calm motion, and image-led interaction.</p>
+            <dl>
+              <div><dt>Year</dt><dd>${year}</dd></div>
+              <div><dt>Role</dt><dd>${role}</dd></div>
+            </dl>
+            <a class="projects-zoom__link" href="https://hirotos.com/" target="_blank" rel="noreferrer">Visit original</a>
+          </div>
+          <figure class="projects-zoom__image"><img src="${image}" alt="${title}" /></figure>
+          <ol class="projects-zoom__map">
+            ${projects
+              .map(
+                (item) => `
+                  <li class="${item[0] === title ? 'is-active' : ''}">
+                    <button type="button" data-project="${item[0]}" aria-label="${item[0]}">
+                      <img src="${item[4]}" alt="" />
+                    </button>
+                  </li>`,
+              )
+              .join('')}
+          </ol>
+        `;
+        detail.classList.remove('preview-hidden');
+        detail.querySelector('#closeDetail').addEventListener('click', () => detail.classList.add('preview-hidden'));
+        detail.querySelectorAll('[data-project]').forEach((button) => {
+          button.addEventListener('click', () => renderDetail(projects.find((item) => item[0] === button.dataset.project)));
+        });
+      }
+
+      function renderProjects() {
+        track.innerHTML = [...projects, ...projects]
+          .map(
+            (project, index) => `
+              <button class="projects-marquee__item" type="button" data-project="${project[0]}" key="${index}">
+                <figure class="projects-marquee__figure"><img src="${project[4]}" alt="" /></figure>
+                <span class="projects-gl-caption"><span>${project[1]}</span><strong>${project[0]}</strong></span>
+              </button>`,
+          )
+          .join('');
+        track.querySelectorAll('[data-project]').forEach((button) => {
+          button.addEventListener('click', () => renderDetail(projects.find((item) => item[0] === button.dataset.project)));
+        });
+      }
+
+      document.querySelectorAll('[data-go]').forEach((button) => {
+        button.addEventListener('click', () => go(button.dataset.go));
+      });
+      const projectCursorBadge = document.querySelector('#projectCursorBadge');
+      const contactCursorBadge = document.querySelector('#contactCursorBadge');
+      const aboutCursorBadge = document.querySelector('#aboutCursorBadge');
+      renderProjects();
+      const initialPage = (location.hash || '#home').slice(1);
+      go(['home', 'projects', 'about', 'contact'].includes(initialPage) ? initialPage : 'home');
+    </script>
+    <script type="module">
+      const mount = document.querySelector('#threeModel');
+      [
+        'signal-model-tune',
+        'signal-render-tune',
+        'blue-text-tune',
+        'contact-text-tune',
+        'about-pattern-tune-v4-centered-logo',
+      ].forEach((key) => localStorage.removeItem(key));
+      let signalTune = window.__signalTune || {
+        spinOffset: -0.36,
+        scale: 10.1,
+        cameraY: 10,
+        cameraZ: 13,
+        focalLength: 30,
+        left: 0,
+        bottom: -29,
+      };
+      let renderTune = window.__renderTune || {
+        exposure: 0.92,
+        envMapIntensity: 0.75,
+        envLight: 0.45,
+        keyLight: 0.85,
+        rimLight: 0.8,
+        fillLight: 0.03,
+        fog: 0,
+      };
+      let blueTextTune = window.__blueTextTune || {
+        size: 41,
+        centerY: 51,
+        scaleX: 143,
+        gap: 109,
+        speed: 100,
+      };
+      function showModelError(message) {
+        mount.classList.add('is-ready');
+        mount.insertAdjacentHTML('beforeend', `<p class="model-load-error">${message}</p>`);
+      }
+      mount.dataset.status = 'loading modules';
+
+      let THREE;
+      let GLTFLoader;
+      let RGBELoader;
+      try {
+        THREE = await import('three');
+        ({ GLTFLoader } = await import('three/addons/loaders/GLTFLoader.js'));
+        ({ RGBELoader } = await import('three/addons/loaders/RGBELoader.js'));
+        mount.dataset.status = 'loading renderer';
+      } catch (error) {
+        showModelError(`3D modules failed: ${error.message}`);
+        throw error;
+      }
+
+      let renderer;
+      try {
+        const Renderer = THREE.WebGL1Renderer || THREE.WebGLRenderer;
+        renderer = new Renderer({ alpha: true, antialias: true });
+        mount.dataset.status = 'setting renderer';
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = renderTune.exposure;
+        mount.appendChild(renderer.domElement);
+      } catch (error) {
+        showModelError(`WebGL renderer failed: ${error.message || 'unknown error'}`);
+        throw error;
+      }
+
+      mount.dataset.status = 'loading environment';
+      const scene = new THREE.Scene();
+      const camera = new THREE.PerspectiveCamera(28, 1, 0.001, 2000);
+      let activeCamera = camera;
+      const root = new THREE.Group();
+      scene.add(root);
+
+      const fallbackEnvironment = makeStudioEnvironment(THREE);
+      scene.environment = fallbackEnvironment;
+      scene.environmentIntensity = renderTune.envMapIntensity;
+      scene.fog = new THREE.FogExp2(0xeaf4fa, 0.001);
+      scene.fog.density = renderTune.fog;
+
+      const hemi = new THREE.HemisphereLight(0xffffff, 0xdff3ff, renderTune.envLight);
+      scene.add(hemi);
+      const key = new THREE.DirectionalLight(0xffffff, renderTune.keyLight);
+      key.position.set(-4.8, -5.8, 6.4);
+      scene.add(key);
+      const rim = new THREE.DirectionalLight(0xb9e8ff, renderTune.rimLight);
+      rim.position.set(5.6, -2.6, 4.2);
+      scene.add(rim);
+      const face = new THREE.DirectionalLight(0xeaf8ff, renderTune.fillLight);
+      face.position.set(0.8, -6, 1.1);
+      scene.add(face);
+
+      let model = null;
+      let spinGroup = null;
+      const pointer = { x: 0, y: 0 };
+      const wheel = { rotation: 0, target: 0 };
+      const tune = { ...signalTune };
+      const cameraRig = { enabled: false, target: new THREE.Vector3(0.02, 0.08, 0.08) };
+      const animatedTextures = [];
+      const signalMaterials = [];
+      let modelMaxSize = 1;
+      let hdrEnvironment = null;
+      let hdrSource = null;
+      let pmremGenerator = null;
+      let projectsSignMesh = null;
+      let contactBallMesh = null;
+      let aboutTriangleMesh = null;
+      const raycaster = new THREE.Raycaster();
+      const rayPointer = new THREE.Vector2();
+      const normalMatrix = new THREE.Matrix3();
+      const hitNormal = new THREE.Vector3();
+      const toCamera = new THREE.Vector3();
+      const fixedModelStage = { width: 2048, height: 1152 };
+
+      async function loadHdrEnvironment() {
+        try {
+          pmremGenerator = new THREE.PMREMGenerator(renderer);
+          pmremGenerator.compileEquirectangularShader();
+          hdrSource = await new RGBELoader().loadAsync('public/assets/environment/city.hdr');
+          hdrEnvironment = pmremGenerator.fromEquirectangular(hdrSource).texture;
+          scene.environment = hdrEnvironment;
+        } catch (error) {
+          console.warn('HDR environment failed, using fallback environment', error);
+        }
+      }
+
+      function applyTune(next = signalTune) {
+        Object.assign(tune, next);
+        if (model) {
+          model.scale.setScalar(tune.scale / modelMaxSize);
+        }
+        activeCamera.position.y = tune.cameraY;
+        activeCamera.position.z = tune.cameraZ;
+        activeCamera.setFocalLength(tune.focalLength);
+        activeCamera.near = 0.001;
+        activeCamera.far = 2000;
+        const viewWidth = fixedModelStage.width;
+        const viewHeight = fixedModelStage.height;
+        activeCamera.zoom = 1;
+        activeCamera.clearViewOffset();
+        activeCamera.setViewOffset(
+          viewWidth,
+          viewHeight,
+          (-tune.left / 100) * viewWidth,
+          (tune.bottom / 100) * viewHeight,
+          viewWidth,
+          viewHeight,
+        );
+        activeCamera.updateProjectionMatrix();
+        if (cameraRig.enabled) {
+          activeCamera.lookAt(cameraRig.target);
+        }
+      }
+
+      function makeLabelTexture({ text, background, foreground, width = 1400, height = 260, font = '900 82px Arial, sans-serif' }) {
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = background;
+        ctx.fillRect(0, 0, width, height);
+        ctx.fillStyle = foreground;
+        ctx.font = font;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.translate(width / 2, height / 2);
+        ctx.fillText(text, 0, 8);
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.flipY = false;
+        texture.anisotropy = 8;
+        return texture;
+      }
+
+      function applyRenderTune(next = renderTune) {
+        renderer.toneMappingExposure = next.exposure;
+        scene.environmentIntensity = next.envMapIntensity;
+        hemi.intensity = next.envLight;
+        key.intensity = next.keyLight;
+        rim.intensity = next.rimLight;
+        face.intensity = next.fillLight;
+        if (scene.fog) scene.fog.density = next.fog;
+      }
+
+      function makeProjectsArchiveTexture(fontScaleX = 1) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 2048;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.flipY = false;
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.anisotropy = 8;
+
+        const text = 'PROJECTS ARCHIVE';
+        const draw = (time = 0, textTune = blueTextTune) => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#2447ff';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#ffffff';
+          ctx.font = `400 ${textTune.size}px Arial, Helvetica, sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          const userScaleX = textTune.scaleX / 100;
+          const totalScaleX = fontScaleX * userScaleX;
+          const cycle = ctx.measureText(text).width * totalScaleX + textTune.gap;
+          const offset = (time * textTune.speed) % cycle;
+          ctx.save();
+          ctx.translate(canvas.width * 0.5, canvas.height * (textTune.centerY / 100));
+          ctx.scale(totalScaleX, 1);
+          for (let x = -canvas.width - cycle - offset; x < canvas.width + cycle; x += cycle) {
+            ctx.fillText(text, x / totalScaleX, 0);
+          }
+          ctx.restore();
+          texture.needsUpdate = true;
+        };
+
+        draw(0);
+        animatedTextures.push(draw);
+
+        return texture;
+      }
+
+      function getProjectsTextScale(mesh) {
+        const geometry = mesh.geometry;
+        const uv = geometry?.attributes?.uv;
+        const position = geometry?.attributes?.position;
+        if (!geometry || !uv || !position) return 1;
+
+        geometry.computeBoundingBox();
+        const size = new THREE.Vector3();
+        geometry.boundingBox.getSize(size);
+        size.multiply(mesh.scale);
+        const dimensions = [Math.abs(size.x), Math.abs(size.y), Math.abs(size.z)].filter((value) => value > 0.0001).sort((a, b) => b - a);
+        if (dimensions.length < 2) return 1;
+        const geometryAspect = dimensions[0] / dimensions[1];
+
+        let minU = Infinity;
+        let maxU = -Infinity;
+        let minV = Infinity;
+        let maxV = -Infinity;
+        for (let index = 0; index < uv.count; index += 1) {
+          const u = uv.getX(index);
+          const v = uv.getY(index);
+          minU = Math.min(minU, u);
+          maxU = Math.max(maxU, u);
+          minV = Math.min(minV, v);
+          maxV = Math.max(maxV, v);
+        }
+        const uvWidth = Math.max(0.0001, maxU - minU);
+        const uvHeight = Math.max(0.0001, maxV - minV);
+        const textureAspect = 2048 / 512;
+        const stretch = geometryAspect / ((uvWidth / uvHeight) * textureAspect);
+        return THREE.MathUtils.clamp(1 / stretch, 0.18, 2.4);
+      }
+
+      function makeContactBallTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024;
+        canvas.height = 1024;
+        const ctx = canvas.getContext('2d');
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.flipY = false;
+        texture.anisotropy = 8;
+
+        const glyphs = {
+          C: ['11110', '10000', '10000', '10000', '10000', '10000', '11110'],
+          O: ['01110', '10001', '10001', '10001', '10001', '10001', '01110'],
+          N: ['10001', '11001', '10101', '10011', '10001', '10001', '10001'],
+          T: ['11111', '00100', '00100', '00100', '00100', '00100', '00100'],
+          A: ['01110', '10001', '10001', '11111', '10001', '10001', '10001'],
+        };
+        const arrowGlyph = ['11000', '01100', '00110', '00011', '00110', '01100', '11000'];
+        const text = 'CONTACT';
+
+        const draw = (time = 0, textTune = contactTextTune) => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#ef3f42';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          const dot = textTune.dot;
+          const gap = textTune.gap;
+          const letterGap = textTune.letterGap;
+          const rows = 7;
+          const letters = [...text];
+          const cols = letters.reduce((total, char) => total + glyphs[char][0].length, 0);
+          const totalWidth = cols * dot + (letters.length - 1) * letterGap + (cols - letters.length) * gap;
+          const totalHeight = rows * dot + (rows - 1) * gap;
+          let x = canvas.width * (textTune.x / 100) - totalWidth * 0.5;
+          const y = textTune.y - totalHeight * 0.5;
+          ctx.fillStyle = '#ffffff';
+          letters.forEach((char) => {
+            glyphs[char].forEach((row, rowIndex) => {
+              [...row].forEach((cell, colIndex) => {
+                if (cell === '1') {
+                  ctx.fillRect(x + colIndex * (dot + gap), y + rowIndex * (dot + gap), dot, dot);
+                }
+              });
+            });
+            x += glyphs[char][0].length * (dot + gap) + letterGap;
+          });
+
+          const arrowDot = Math.max(4, dot * 0.62);
+          const arrowGap = Math.max(2, gap * 0.65);
+          const arrowLetterGap = Math.max(arrowDot * 1.2, letterGap * 0.75);
+          const arrowWidth = arrowGlyph[0].length * arrowDot + (arrowGlyph[0].length - 1) * arrowGap;
+          const arrowCycle = arrowWidth + arrowLetterGap;
+          const arrowOffset = (time * 92) % arrowCycle;
+          const arrowY = y + totalHeight + dot * 2.35;
+          for (let arrowIndex = -2; arrowIndex < Math.ceil(canvas.width / arrowCycle) + 3; arrowIndex += 1) {
+            const baseX = arrowIndex * arrowCycle + arrowOffset;
+            arrowGlyph.forEach((row, rowIndex) => {
+              [...row].forEach((cell, colIndex) => {
+                if (cell === '1') {
+                  ctx.fillRect(baseX + colIndex * (arrowDot + arrowGap), arrowY + rowIndex * (arrowDot + arrowGap), arrowDot, arrowDot);
+                }
+              });
+            });
+          }
+          texture.needsUpdate = true;
+        };
+
+        draw(0);
+        animatedTextures.push((time) => draw(time, contactTextTune));
+        return texture;
+      }
+
+      function makeAboutTriangleTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024;
+        canvas.height = 1024;
+        const ctx = canvas.getContext('2d');
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.flipY = false;
+        texture.anisotropy = 8;
+
+        let patternMask = null;
+        const image = new Image();
+        image.onload = () => {
+          patternMask = buildPatternMask(image);
+          draw(aboutPatternTune);
+        };
+        image.src = 'public/assets/about-pattern-source.png?v=20260811-about-centered-logo-v4';
+
+        function buildPatternMask(sourcePattern) {
+          const temp = document.createElement('canvas');
+          temp.width = 1024;
+          temp.height = 1024;
+          const tempCtx = temp.getContext('2d');
+          const sourceAspect = sourcePattern.naturalWidth / sourcePattern.naturalHeight;
+          const targetWidth = 420;
+          const targetHeight = targetWidth / sourceAspect;
+          tempCtx.drawImage(sourcePattern, (temp.width - targetWidth) * 0.5, 360, targetWidth, targetHeight);
+          const imageData = tempCtx.getImageData(0, 0, temp.width, temp.height);
+          const data = imageData.data;
+          for (let index = 0; index < data.length; index += 4) {
+            if (data[index + 3] < 8) {
+              data[index + 3] = 0;
+              continue;
+            }
+            const brightness = (data[index] + data[index + 1] + data[index + 2]) / 3;
+            if (brightness < 118) {
+              data[index] = 5;
+              data[index + 1] = 5;
+              data[index + 2] = 5;
+              data[index + 3] = 255;
+            } else {
+              data[index + 3] = 0;
+            }
+          }
+          tempCtx.putImageData(imageData, 0, 0);
+          return temp;
+        }
+
+        function drawExtractedPattern(patternTune, time = 0) {
+          if (!patternMask) return;
+          const pulse = 1 + 0.16 * (0.5 - 0.5 * Math.cos(time * Math.PI * 0.72));
+          ctx.save();
+          ctx.translate(512 + patternTune.x, 512 + patternTune.y);
+          ctx.rotate((patternTune.rotate * Math.PI) / 180);
+          ctx.scale((patternTune.scale / 100) * pulse, (patternTune.scale / 100) * pulse);
+          ctx.translate(-512, -512);
+          ctx.globalAlpha = patternTune.opacity / 100;
+          ctx.drawImage(patternMask, 0, 0);
+          ctx.restore();
+        }
+
+        const draw = (patternTune = aboutPatternTune, time = 0) => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = 'rgba(255, 210, 44, 0.92)';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          drawExtractedPattern(patternTune, time);
+          texture.needsUpdate = true;
+        };
+
+        draw(aboutPatternTune, 0);
+        animatedTextures.push((time) => draw(aboutPatternTune, time));
+        return texture;
+      }
+
+      function makeStudioEnvironment(THREE) {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1536;
+        canvas.height = 768;
+        const ctx = canvas.getContext('2d');
+
+        const sky = ctx.createLinearGradient(0, 0, 0, canvas.height);
+        sky.addColorStop(0, '#f9fdff');
+        sky.addColorStop(0.28, '#eaf6ff');
+        sky.addColorStop(0.58, '#f7fbff');
+        sky.addColorStop(1, '#d7e5ee');
+        ctx.fillStyle = sky;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = 'rgba(255,255,255,.62)';
+        ctx.fillRect(0, 360, canvas.width, 180);
+        ctx.fillStyle = 'rgba(168,207,231,.18)';
+        ctx.fillRect(0, 480, canvas.width, 288);
+
+        const skyline = [
+          [38, 242, 70, 250],
+          [126, 188, 108, 304],
+          [276, 220, 80, 272],
+          [392, 146, 138, 346],
+          [580, 204, 96, 288],
+          [736, 126, 160, 378],
+          [952, 184, 116, 320],
+          [1120, 226, 82, 278],
+          [1248, 154, 150, 356],
+          [1430, 212, 96, 292],
+        ];
+
+        skyline.forEach(([x, y, w, h], index) => {
+          const glass = ctx.createLinearGradient(x, y, x + w, y + h);
+          glass.addColorStop(0, 'rgba(246,252,255,.72)');
+          glass.addColorStop(0.46, 'rgba(171,215,242,.26)');
+          glass.addColorStop(1, 'rgba(255,255,255,.52)');
+          ctx.fillStyle = glass;
+          ctx.fillRect(x, y, w, h);
+          ctx.strokeStyle = 'rgba(150,176,195,.22)';
+          ctx.lineWidth = 3;
+          ctx.strokeRect(x + 1.5, y + 1.5, w - 3, h - 3);
+          ctx.fillStyle = index % 2 ? 'rgba(185,232,255,.54)' : 'rgba(255,255,255,.82)';
+          for (let yy = y + 24; yy < y + h - 18; yy += 32) {
+            ctx.fillRect(x + 14, yy, w - 28, 4);
+          }
+          ctx.fillStyle = 'rgba(80,152,205,.16)';
+          for (let xx = x + 22; xx < x + w - 18; xx += 28) {
+            ctx.fillRect(xx, y + 16, 3, h - 32);
+          }
+        });
+
+        ctx.fillStyle = 'rgba(12,26,38,.22)';
+        ctx.fillRect(0, 548, canvas.width, 46);
+        ctx.fillStyle = 'rgba(255,255,255,.9)';
+        ctx.fillRect(90, 568, 320, 14);
+        ctx.fillRect(618, 566, 230, 12);
+        ctx.fillRect(1060, 570, 300, 13);
+        ctx.fillStyle = 'rgba(185,232,255,.58)';
+        ctx.fillRect(0, 414, canvas.width, 8);
+        ctx.fillRect(0, 598, canvas.width, 5);
+
+        ctx.fillStyle = 'rgba(255,255,255,.74)';
+        ctx.fillRect(90, 24, 150, 300);
+        ctx.fillRect(654, 18, 96, 360);
+        ctx.fillRect(1210, 30, 118, 326);
+        ctx.fillStyle = 'rgba(185,232,255,.46)';
+        ctx.fillRect(476, 42, 70, 230);
+        ctx.fillRect(878, 64, 86, 250);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.mapping = THREE.EquirectangularReflectionMapping;
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.anisotropy = 8;
+        return texture;
+      }
+
+      function makeMirrorTexture() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 512;
+        const ctx = canvas.getContext('2d');
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.flipY = false;
+        animatedTextures.push((time) => {
+          ctx.clearRect(0, 0, 512, 512);
+          const shift = (time * 22) % 90;
+          const sky = ctx.createLinearGradient(0, 0, 0, 512);
+          sky.addColorStop(0, '#9fd0ff');
+          sky.addColorStop(0.48, '#dff2ff');
+          sky.addColorStop(1, '#f6fbff');
+          ctx.fillStyle = sky;
+          ctx.fillRect(0, 0, 512, 512);
+          ctx.fillStyle = 'rgba(20,42,70,.26)';
+          ctx.fillRect(0, 340, 512, 80);
+          for (let i = 0; i < 9; i += 1) {
+            const x = 38 + i * 52 - shift;
+            const height = 138 + ((i * 37) % 110);
+            ctx.fillStyle = i % 2 ? 'rgba(255,255,255,.96)' : 'rgba(207,223,240,.96)';
+            ctx.fillRect(x, 302 - height, 38, height);
+            ctx.fillStyle = 'rgba(60,92,128,.42)';
+            for (let y = 180 - height; y < 292; y += 18) {
+              ctx.fillRect(x + 6, y, 26, 4);
+            }
+          }
+          ctx.fillStyle = 'rgba(16,18,20,.44)';
+          ctx.fillRect(0, 390, 512, 58);
+          ctx.fillStyle = 'rgba(255,255,255,.92)';
+          ctx.fillRect(70 + shift * 0.8, 408, 120, 34);
+          ctx.fillRect(280 - shift * 0.45, 414, 96, 28);
+          ctx.strokeStyle = 'rgba(255,255,255,.72)';
+          ctx.lineWidth = 16;
+          ctx.beginPath();
+          ctx.moveTo(150, 78);
+          ctx.lineTo(94, 426);
+          ctx.moveTo(342, 64);
+          ctx.lineTo(282, 462);
+          ctx.stroke();
+          texture.needsUpdate = true;
+        });
+        return texture;
+      }
+
+      function decorateModel(rootObject) {
+        const contactTexture = makeContactBallTexture();
+        const aboutTriangleTexture = makeAboutTriangleTexture();
+        rootObject.traverse((object) => {
+          if (!object.isMesh) return;
+          const materials = Array.isArray(object.material) ? object.material : [object.material];
+          materials.forEach((material) => {
+            if (!material) return;
+            if (material.name === '材质.004') {
+              aboutTriangleMesh = object;
+              material.map = aboutTriangleTexture;
+              material.color.set('#ffffff');
+              material.transparent = true;
+              material.opacity = 0.72;
+              material.depthWrite = false;
+              material.side = THREE.DoubleSide;
+              if (material.emissive) {
+                material.emissive.set('#1a1200');
+                material.emissiveIntensity = 0.02;
+              }
+            }
+            if (material.name === 'to_projects.001') {
+              projectsSignMesh = object;
+              material.map = makeProjectsArchiveTexture(getProjectsTextScale(object));
+              material.color.set('#ffffff');
+              material.transparent = false;
+              material.opacity = 1;
+              material.depthWrite = true;
+              material.side = THREE.DoubleSide;
+              if (material.emissive) {
+                material.emissive.set('#071bff');
+                material.emissiveIntensity = 0.08;
+              }
+            }
+            if (object.name === 'Keychain-03' || material.name === '材质.001') {
+              contactBallMesh = object;
+              material.map = contactTexture;
+              material.color.set('#ffffff');
+              material.transparent = false;
+              material.opacity = 1;
+              if (material.emissive) {
+                material.emissive.set('#210000');
+                material.emissiveIntensity = 0.02;
+              }
+            }
+            if (material.map) material.map.anisotropy = 8;
+            material.needsUpdate = true;
+          });
+        });
+      }
+
+      function bindModelToPoleAxis(rootObject) {
+        const pivot = new THREE.Group();
+        pivot.name = 'model_center_rotation';
+        pivot.add(rootObject);
+        return pivot;
+      }
+
+      function resize() {
+        const rect = mount.parentElement?.getBoundingClientRect() || mount.getBoundingClientRect();
+        renderer.domElement.style.width = '';
+        renderer.domElement.style.height = '';
+        renderer.setSize(fixedModelStage.width, fixedModelStage.height, false);
+        activeCamera.aspect = fixedModelStage.width / fixedModelStage.height;
+        applyTune(tune);
+      }
+
+      function frame() {
+        requestAnimationFrame(frame);
+        const time = performance.now() / 1000;
+        if (model) {
+          wheel.rotation += (wheel.target - wheel.rotation) * 0.075;
+          root.rotation.x += (0 - root.rotation.x) * 0.08;
+          root.rotation.y += (0 - root.rotation.y) * 0.08;
+          root.rotation.z += (0 - root.rotation.z) * 0.08;
+          if (spinGroup) {
+            spinGroup.rotation.y += (tune.spinOffset + wheel.rotation + pointer.x * 0.012 - spinGroup.rotation.y) * 0.06;
+          }
+          if (cameraRig.enabled) {
+            activeCamera.lookAt(cameraRig.target);
+          }
+          animatedTextures.forEach((update) => update(time));
+          const active = Math.floor(time * 1.25) % 3;
+          const colors = ['#ff8060', '#fff2a8', '#b9e8ff'];
+          signalMaterials.forEach((material, index) => {
+            const on = index === active;
+            material.color.set(on ? colors[index] : '#050505');
+            material.emissive.set(on ? colors[index] : '#000000');
+            material.emissiveIntensity = on ? 4 : 0;
+          });
+        }
+        renderer.render(scene, activeCamera);
+      }
+
+      mount.dataset.status = 'loading GLB';
+      new GLTFLoader().load(
+        'public/assets/hirotos-original-model.glb?v=20260811-hdr-original',
+        (gltf) => {
+          try {
+            model = gltf.scene;
+            const box = new THREE.Box3().setFromObject(model);
+            const size = box.getSize(new THREE.Vector3());
+            const center = box.getCenter(new THREE.Vector3());
+            model.position.sub(center);
+            model.position.x += 0.02;
+            model.position.z -= 0.1;
+            modelMaxSize = Math.max(size.x, size.y, size.z);
+            model.scale.setScalar(tune.scale / modelMaxSize);
+            decorateModel(model);
+            spinGroup = bindModelToPoleAxis(model);
+            root.add(spinGroup);
+            camera.position.set(0.04, -9.9, 7.6);
+            camera.setFocalLength(60);
+            camera.near = 0.001;
+            camera.far = 2000;
+            camera.updateProjectionMatrix();
+            cameraRig.enabled = true;
+            cameraRig.target.set(0.02, 0.08, 0.08);
+            activeCamera = camera;
+            if (gltf.cameras?.[0]) {
+              const sourceCamera = gltf.cameras[0];
+              const cameraPosition = new THREE.Vector3();
+              const cameraQuaternion = new THREE.Quaternion();
+              model.updateMatrixWorld(true);
+              sourceCamera.getWorldPosition(cameraPosition);
+              sourceCamera.getWorldQuaternion(cameraQuaternion);
+              activeCamera = camera;
+              activeCamera.position.copy(cameraPosition);
+              activeCamera.position.y = tune.cameraY;
+              activeCamera.position.z = tune.cameraZ;
+              activeCamera.setFocalLength(tune.focalLength);
+              activeCamera.near = 0.001;
+              activeCamera.far = 2000;
+              cameraRig.enabled = true;
+              cameraRig.target.set(0.02, 0.08, 0.08);
+              activeCamera.up.set(0, 1, 0);
+              activeCamera.lookAt(cameraRig.target);
+            } else if (!cameraRig.enabled) {
+              camera.position.set(0, -7.2, 2.85);
+              camera.lookAt(0, 0, 0.1);
+            }
+            applyTune();
+            resize();
+            mount.dataset.status = 'ready';
+            mount.classList.add('is-ready');
+          } catch (error) {
+            console.error('3D model setup failed', error);
+            showModelError(`3D model setup failed: ${error.message || 'unknown error'}`);
+          }
+        },
+        (event) => {
+          if (event.total) {
+            mount.dataset.status = `loading ${Math.round((event.loaded / event.total) * 100)}%`;
+          }
+        },
+        (error) => {
+          console.error('Failed to load GLB model', error);
+          showModelError(`3D model failed: ${error.message || 'unknown error'}`);
+        },
+      );
+
+      mount.addEventListener('pointermove', (event) => {
+        const rect = renderer.domElement.getBoundingClientRect();
+        pointer.x = (event.clientX - rect.left) / rect.width - 0.5;
+        pointer.y = (event.clientY - rect.top) / rect.height - 0.5;
+        rayPointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        rayPointer.y = -(((event.clientY - rect.top) / rect.height) * 2 - 1);
+        raycaster.setFromCamera(rayPointer, activeCamera);
+        const isOverProjects = isFrontFacingHit(projectsSignMesh);
+        const isOverContact = isFrontFacingHit(contactBallMesh, {
+          uvBounds: { uMin: 0.08, uMax: 0.92, vMin: 0.18, vMax: 0.62 },
+          minDot: 0.16,
+        });
+        const isOverAbout = isFrontFacingHit(aboutTriangleMesh, {
+          uvBounds: { uMin: 0.12, uMax: 0.88, vMin: 0.18, vMax: 0.82 },
+          minDot: 0.16,
+        });
+        [projectCursorBadge, contactCursorBadge, aboutCursorBadge].forEach((badge) => {
+          badge?.style.setProperty('--cursor-x', `${event.clientX}px`);
+          badge?.style.setProperty('--cursor-y', `${event.clientY}px`);
+        });
+        projectCursorBadge?.classList.toggle('is-visible', isOverProjects && !isOverContact && !isOverAbout);
+        contactCursorBadge?.classList.toggle('is-visible', isOverContact);
+        aboutCursorBadge?.classList.toggle('is-visible', isOverAbout && !isOverContact);
+      });
+      mount.addEventListener('pointerleave', () => {
+        projectCursorBadge?.classList.remove('is-visible');
+        contactCursorBadge?.classList.remove('is-visible');
+        aboutCursorBadge?.classList.remove('is-visible');
+      });
+      mount.addEventListener('click', (event) => {
+        const rect = renderer.domElement.getBoundingClientRect();
+        rayPointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        rayPointer.y = -(((event.clientY - rect.top) / rect.height) * 2 - 1);
+        raycaster.setFromCamera(rayPointer, activeCamera);
+        if (isFrontFacingHit(contactBallMesh, {
+          uvBounds: { uMin: 0.08, uMax: 0.92, vMin: 0.18, vMax: 0.62 },
+          minDot: 0.16,
+        })) {
+          go('contact');
+          return;
+        }
+        if (isFrontFacingHit(aboutTriangleMesh, {
+          uvBounds: { uMin: 0.12, uMax: 0.88, vMin: 0.18, vMax: 0.82 },
+          minDot: 0.16,
+        })) {
+          go('about');
+          return;
+        }
+        if (isFrontFacingHit(projectsSignMesh)) {
+          go('projects');
+        }
+      });
+
+      function isFrontFacingHit(mesh, options = {}) {
+        if (!mesh) return false;
+        const hits = raycaster.intersectObject(mesh, true);
+        if (!hits.length) return false;
+        return hits.some((hit) => {
+        if (options.uvBounds && hit.uv) {
+          const { uMin, uMax, vMin, vMax } = options.uvBounds;
+          const u = THREE.MathUtils.euclideanModulo(hit.uv.x, 1);
+          const v = THREE.MathUtils.euclideanModulo(hit.uv.y, 1);
+          if (u < uMin || u > uMax || v < vMin || v > vMax) return false;
+        }
+        if (!hit.face) return true;
+        normalMatrix.getNormalMatrix(hit.object.matrixWorld);
+        hitNormal.copy(hit.face.normal).applyMatrix3(normalMatrix).normalize();
+        toCamera.copy(activeCamera.position).sub(hit.point).normalize();
+        return hitNormal.dot(toCamera) > (options.minDot ?? 0.08);
+        });
+      }
+      window.addEventListener('wheel', (event) => {
+        if (!document.querySelector('[data-page="home"]').classList.contains('is-active')) return;
+        wheel.target += event.deltaY * 0.0018;
+      }, { passive: true });
+      window.addEventListener('signal-model:tune', (event) => {
+        signalTune = event.detail;
+        applyTune(signalTune);
+      });
+      window.addEventListener('signal-render:tune', (event) => {
+        renderTune = event.detail;
+        applyRenderTune(renderTune);
+      });
+      window.addEventListener('blue-text:tune', (event) => {
+        blueTextTune = event.detail;
+      });
+      window.addEventListener('contact-text:tune', (event) => {
+        contactTextTune = event.detail;
+      });
+      window.addEventListener('about-pattern:tune', (event) => {
+        aboutPatternTune = event.detail;
+      });
+      window.addEventListener('resize', resize);
+      applyTune();
+      applyRenderTune();
+      resize();
+      loadHdrEnvironment();
+      frame();
+    </script>
+  </body>
+</html>
+
+

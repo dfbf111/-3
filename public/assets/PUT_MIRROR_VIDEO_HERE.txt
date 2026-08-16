@@ -1,0 +1,12 @@
+Place your looping mirror video at:
+
+public/assets/mirror-video.mp4
+
+Recommended settings:
+- MP4 / H.264
+- 1:1 or 4:3 crop
+- 3 to 8 seconds
+- Muted
+- Around 720p or smaller for fast loading
+
+The site falls back to an animated reflection if this file is missing.
