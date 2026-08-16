@@ -1241,27 +1241,70 @@ function SignalModel({ navigate }) {
           video.crossOrigin = 'anonymous';
           video.setAttribute('webkit-playsinline', '');
 
-          const texture = new THREE.VideoTexture(video);
+          const canvas = document.createElement('canvas');
+          canvas.width = 720;
+          canvas.height = 720;
+          const context = canvas.getContext('2d', { alpha: false });
+          const texture = new THREE.CanvasTexture(canvas);
           texture.colorSpace = THREE.SRGBColorSpace;
           texture.flipY = false;
           texture.minFilter = THREE.LinearFilter;
           texture.magFilter = THREE.LinearFilter;
           texture.generateMipmaps = false;
+          texture.anisotropy = 1;
 
           const oldMap = material.map;
           material.map = texture;
           material.needsUpdate = true;
           oldMap?.dispose?.();
 
-          video.play().catch(() => {
-            const playOnFirstGesture = () => {
-              video.play().catch(() => {});
-              window.removeEventListener('pointerdown', playOnFirstGesture);
-              window.removeEventListener('keydown', playOnFirstGesture);
-            };
-            window.addEventListener('pointerdown', playOnFirstGesture, { once: true });
-            window.addEventListener('keydown', playOnFirstGesture, { once: true });
-          });
+          let lastPaintTime = 0;
+          let lastVideoTime = -1;
+          let stalledFrames = 0;
+
+          function paintVideoFrame(time) {
+            if (!alive || !context) return;
+            if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && time - lastPaintTime > 1 / 15) {
+              const side = Math.min(video.videoWidth || canvas.width, video.videoHeight || canvas.height);
+              const sx = Math.max(0, ((video.videoWidth || side) - side) / 2);
+              const sy = Math.max(0, ((video.videoHeight || side) - side) / 2);
+              context.drawImage(video, sx, sy, side, side, 0, 0, canvas.width, canvas.height);
+              texture.needsUpdate = true;
+              lastPaintTime = time;
+
+              if (Math.abs(video.currentTime - lastVideoTime) < 0.001) {
+                stalledFrames += 1;
+              } else {
+                stalledFrames = 0;
+                lastVideoTime = video.currentTime;
+              }
+
+              if (stalledFrames > 45 && !video.paused) {
+                stalledFrames = 0;
+                video.currentTime = Math.min(video.duration || video.currentTime + 0.04, video.currentTime + 0.04);
+                video.play().catch(() => {});
+              }
+            }
+          }
+
+          animatedTextures.push(paintVideoFrame);
+
+          function playVideo() {
+            return video.play().catch(() => {
+              const playOnFirstGesture = () => {
+                video.play().catch(() => {});
+                window.removeEventListener('pointerdown', playOnFirstGesture);
+                window.removeEventListener('keydown', playOnFirstGesture);
+              };
+              window.addEventListener('pointerdown', playOnFirstGesture, { once: true });
+              window.addEventListener('keydown', playOnFirstGesture, { once: true });
+            });
+          }
+
+          video.addEventListener('waiting', playVideo);
+          video.addEventListener('stalled', playVideo);
+          video.addEventListener('suspend', playVideo);
+          playVideo();
 
           videoTextures.push({ texture, video });
         }, 3200);
