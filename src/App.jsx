@@ -1267,7 +1267,7 @@ function SignalModel({ navigate }) {
             if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && time - lastPaintTime > 1 / 15) {
               const videoWidth = video.videoWidth || canvas.width;
               const videoHeight = video.videoHeight || canvas.height;
-              const videoRatio = videoWidth / videoHeight;
+              const videoRatio = 1280 / 720;
               const canvasRatio = canvas.width / canvas.height;
               let drawWidth = canvas.width;
               let drawHeight = canvas.height;
