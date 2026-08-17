@@ -1265,10 +1265,22 @@ function SignalModel({ navigate }) {
           function paintVideoFrame(time) {
             if (!alive || !context) return;
             if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && time - lastPaintTime > 1 / 15) {
-              const side = Math.min(video.videoWidth || canvas.width, video.videoHeight || canvas.height);
-              const sx = Math.max(0, ((video.videoWidth || side) - side) / 2);
-              const sy = Math.max(0, ((video.videoHeight || side) - side) / 2);
-              context.drawImage(video, sx, sy, side, side, 0, 0, canvas.width, canvas.height);
+              const videoWidth = video.videoWidth || canvas.width;
+              const videoHeight = video.videoHeight || canvas.height;
+              const videoRatio = videoWidth / videoHeight;
+              const canvasRatio = canvas.width / canvas.height;
+              let drawWidth = canvas.width;
+              let drawHeight = canvas.height;
+              if (videoRatio > canvasRatio) {
+                drawHeight = canvas.width / videoRatio;
+              } else {
+                drawWidth = canvas.height * videoRatio;
+              }
+              const dx = (canvas.width - drawWidth) / 2;
+              const dy = (canvas.height - drawHeight) / 2;
+              context.fillStyle = '#050505';
+              context.fillRect(0, 0, canvas.width, canvas.height);
+              context.drawImage(video, 0, 0, videoWidth, videoHeight, dx, dy, drawWidth, drawHeight);
               texture.needsUpdate = true;
               lastPaintTime = time;
 
