@@ -1272,9 +1272,9 @@ function SignalModel({ navigate }) {
               let drawWidth = canvas.width;
               let drawHeight = canvas.height;
               if (videoRatio > canvasRatio) {
-                drawHeight = canvas.width / videoRatio;
-              } else {
                 drawWidth = canvas.height * videoRatio;
+              } else {
+                drawHeight = canvas.width / videoRatio;
               }
               const dx = (canvas.width - drawWidth) / 2;
               const dy = (canvas.height - drawHeight) / 2;
