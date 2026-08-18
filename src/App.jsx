@@ -1300,6 +1300,14 @@ function SignalModel({ navigate }) {
                 playNextVideo();
                 return;
               }
+              context.save();
+              context.globalAlpha = 0.58;
+              context.fillStyle = '#ffffff';
+              context.textAlign = 'center';
+              context.textBaseline = 'middle';
+              context.font = '800 210px "Helvetica Neue", Arial, sans-serif';
+              context.fillText('404', canvas.width / 2, canvas.height / 2);
+              context.restore();
               texture.needsUpdate = true;
               lastPaintTime = time;
 
