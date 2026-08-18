@@ -42,6 +42,13 @@ const aboutCopy = {
 const portraitImagePath = '/assets/portrait.jpg';
 const wechatImagePath = '/assets/wechat.jpg';
 
+const mirrorVideoSources = [
+  '/assets/mirror-loop-01.mp4',
+  '/assets/mirror-loop-02.mp4',
+  '/assets/mirror-loop-03.mp4',
+  '/assets/mirror-loop-04.mp4',
+];
+
 const aboutLayoutDefaults = {
   top: 360,
   width: 700,
@@ -1232,14 +1239,20 @@ function SignalModel({ navigate }) {
         scheduleDeferredJob(() => {
           if (!alive) return;
           const video = document.createElement('video');
-          video.src = encodeURI('/assets/8月15日 (1).mp4');
           video.muted = true;
-          video.loop = true;
+          video.loop = false;
           video.autoplay = true;
           video.playsInline = true;
           video.preload = 'auto';
           video.crossOrigin = 'anonymous';
           video.setAttribute('webkit-playsinline', '');
+          let mirrorVideoIndex = 0;
+
+          function loadMirrorVideo(index) {
+            mirrorVideoIndex = (index + mirrorVideoSources.length) % mirrorVideoSources.length;
+            video.src = mirrorVideoSources[mirrorVideoIndex];
+            video.load();
+          }
 
           const canvas = document.createElement('canvas');
           canvas.width = 720;
@@ -1261,6 +1274,7 @@ function SignalModel({ navigate }) {
           let lastPaintTime = 0;
           let lastVideoTime = -1;
           let stalledFrames = 0;
+          let isSkippingVideo = false;
 
           function paintVideoFrame(time) {
             if (!alive || !context) return;
@@ -1280,7 +1294,12 @@ function SignalModel({ navigate }) {
               const dy = (canvas.height - drawHeight) / 2;
               context.fillStyle = '#050505';
               context.fillRect(0, 0, canvas.width, canvas.height);
-              context.drawImage(video, 0, 0, videoWidth, videoHeight, dx, dy, drawWidth, drawHeight);
+              try {
+                context.drawImage(video, 0, 0, videoWidth, videoHeight, dx, dy, drawWidth, drawHeight);
+              } catch {
+                playNextVideo();
+                return;
+              }
               texture.needsUpdate = true;
               lastPaintTime = time;
 
@@ -1313,9 +1332,23 @@ function SignalModel({ navigate }) {
             });
           }
 
+          function playNextVideo() {
+            if (isSkippingVideo) return;
+            isSkippingVideo = true;
+            window.setTimeout(() => {
+              if (!alive) return;
+              loadMirrorVideo(mirrorVideoIndex + 1);
+              playVideo();
+              isSkippingVideo = false;
+            }, 180);
+          }
+
           video.addEventListener('waiting', playVideo);
           video.addEventListener('stalled', playVideo);
           video.addEventListener('suspend', playVideo);
+          video.addEventListener('ended', playNextVideo);
+          video.addEventListener('error', playNextVideo);
+          loadMirrorVideo(0);
           playVideo();
 
           videoTextures.push({ texture, video });
