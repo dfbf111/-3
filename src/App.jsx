@@ -1306,7 +1306,11 @@ function SignalModel({ navigate }) {
               context.textAlign = 'center';
               context.textBaseline = 'middle';
               context.font = '600 100px "Arial Narrow", "Helvetica Neue Condensed", "Roboto Condensed", Arial, sans-serif';
-              context.fillText('404', canvas.width / 2, canvas.height / 2);
+              context.fillText('404', canvas.width / 2, canvas.height / 2 - 34);
+              context.globalAlpha = 0.72;
+              context.font = '400 20px "Helvetica Neue", Arial, sans-serif';
+              context.fillText('The path may be broken, but the', canvas.width / 2, canvas.height / 2 + 48);
+              context.fillText("journey isn't. Let's get you back.", canvas.width / 2, canvas.height / 2 + 76);
               context.restore();
               texture.needsUpdate = true;
               lastPaintTime = time;
