@@ -1305,7 +1305,7 @@ function SignalModel({ navigate }) {
               context.fillStyle = '#ffffff';
               context.textAlign = 'center';
               context.textBaseline = 'middle';
-              context.font = '800 210px "Helvetica Neue", Arial, sans-serif';
+              context.font = '400 168px "Helvetica Neue", Arial, sans-serif';
               context.fillText('404', canvas.width / 2, canvas.height / 2);
               context.restore();
               texture.needsUpdate = true;
