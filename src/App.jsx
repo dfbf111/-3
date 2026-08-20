@@ -1,4 +1,8 @@
-﻿import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+﻿import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+
+import SpecularButton from './components/SpecularButton/SpecularButton.jsx';
+
+const CircularGallery = lazy(() => import('./components/CircularGallery/CircularGallery.jsx'));
 
 const pages = {
   home: '/',
@@ -41,13 +45,6 @@ const aboutCopy = {
 
 const portraitImagePath = '/assets/portrait.jpg';
 const wechatImagePath = '/assets/wechat.jpg';
-
-const mirrorVideoSources = [
-  '/assets/mirror-loop-01.mp4',
-  '/assets/mirror-loop-02.mp4',
-  '/assets/mirror-loop-03.mp4',
-  '/assets/mirror-loop-04.mp4',
-];
 
 const aboutLayoutDefaults = {
   top: 360,
@@ -143,6 +140,30 @@ const projects = [
     video: '/assets/VIDEO02.mp4',
     tools: 'LTX2.3',
     description: '项目通过 AI 图生视频 + 影视工业化分镜流程 完成制作，将剧本拆解为可控的短视频单元，并精确设计人物一致性、镜头运动、表演动作、光影、音效与前后镜头衔接，形成一套较完整的 AI 短剧制作工作流。',
+  },
+  {
+    slug: 'project-09',
+    title: 'Brand',
+    category: 'BRAND DESIGN',
+    year: '2026',
+    role: 'Brand Visual Design',
+    image: '/assets/project-09.png?v=20260820-09',
+    tools: 'AI/PS/AIGC/BLENDER',
+    description: '视觉系统以“磁能轨道”为核心，从磁吸关系、充电线圈与能量轨迹中提取圆弧、节点、三线导轨和脉冲刻度，表现能量的精准吸附、快速传输与稳定释放。Logo以字母A为基础，由两段磁性圆弧构成“Orbit-A”，中部负形象征能量上行与效率提升。宽体几何字标呼应产品的超薄机身和金属结构，可应用于产品、包装及数字界面。',
+  },
+  {
+    slug: 'project-10',
+    title: 'Brand',
+    category: 'BRAND DESIGN',
+    year: '2026',
+    role: 'Brand Visual Design',
+    image: '/assets/project-10.png?v=20260820-10',
+    tools: 'AI/PS/AIGC/BLENDER',
+    description: `品牌以“陪伴，自然发生”为核心理念，将人与宠物之间温暖、持续的关系转化为简洁而现代的视觉语言。英文口号“Made for Life Together.”进一步传达品牌为人宠共同生活而设计的价值主张。
+
+标志以“开放拱环＋中心圆点”为核心结构。圆润拱形隐含字母“A”，同时象征家、保护与连接；中央圆点代表宠物，也是人与宠物关系中的情感中心。开放的轮廓表达持续发生的陪伴与自由亲近的相处方式。
+
+英文字标“ANIKA”采用圆角几何结构，与图形标志保持统一。字母中的拱形与圆点被重复强化，使品牌名称本身也具备鲜明的识别特征。`,
   },
 ];
 
@@ -282,6 +303,26 @@ function attachProject08Gallery(project) {
   };
 }
 
+function attachProject09Gallery(project) {
+  return {
+    ...project,
+    detailImages: Array.from({ length: 19 }, (_, index) => {
+      const number = String(87 + index).padStart(2, '0');
+      return { src: `/assets/amazon-detail-${number}.png`, layout: 'vertical' };
+    }),
+  };
+}
+
+function attachProject10Gallery(project) {
+  return {
+    ...project,
+    detailImages: Array.from({ length: 14 }, (_, index) => {
+      const number = String(index + 1).padStart(2, '0');
+      return { src: `/assets/品牌视觉${number}.png`, layout: 'vertical' };
+    }),
+  };
+}
+
 const projectsWithDetailImages = projects.map((project) => (
   project.slug === 'signal-pole'
     ? attachDetailGallery(project, amazonDetailGroupB)
@@ -299,6 +340,10 @@ const projectsWithDetailImages = projects.map((project) => (
     ? attachProject07Gallery(project)
     : project.slug === 'project-08'
     ? attachProject08Gallery(project)
+    : project.slug === 'project-09'
+    ? attachProject09Gallery(project)
+    : project.slug === 'project-10'
+    ? attachProject10Gallery(project)
     : project
 ));
 
@@ -454,8 +499,24 @@ const textTuneVars = {
   metaSize: '--text-meta-size',
 };
 
+function readStoredTune(storageKey, defaults) {
+  try {
+    const stored = window.localStorage.getItem(storageKey);
+    if (!stored) return { ...defaults };
+    const parsed = JSON.parse(stored);
+    return Object.fromEntries(
+      Object.entries(defaults).map(([key, defaultValue]) => [
+        key,
+        Number.isFinite(Number(parsed?.[key])) ? Number(parsed[key]) : defaultValue,
+      ]),
+    );
+  } catch {
+    return { ...defaults };
+  }
+}
+
 function readTextTune() {
-  return { ...textTuneDefaults };
+  return readStoredTune('text-layout-tune', textTuneDefaults);
 }
 
 function applyTextTune(tune) {
@@ -520,7 +581,7 @@ const signalTuneControls = [
 ];
 
 function readSignalTune() {
-  return { ...signalTuneDefaults };
+  return readStoredTune('signal-model-tune', signalTuneDefaults);
 }
 
 const renderTuneDefaults = {
@@ -544,7 +605,7 @@ const renderTuneControls = [
 ];
 
 function readRenderTune() {
-  return { ...renderTuneDefaults };
+  return readStoredTune('signal-render-tune', renderTuneDefaults);
 }
 
 const blueTextTuneDefaults = {
@@ -564,7 +625,7 @@ const blueTextTuneControls = [
 ];
 
 function readBlueTextTune() {
-  return { ...blueTextTuneDefaults };
+  return readStoredTune('blue-text-tune', blueTextTuneDefaults);
 }
 
 const contactTextTuneDefaults = {
@@ -584,7 +645,7 @@ const contactTextTuneControls = [
 ];
 
 function readContactTextTune() {
-  return { ...contactTextTuneDefaults };
+  return readStoredTune('contact-text-tune', contactTextTuneDefaults);
 }
 
 const aboutPatternTuneDefaults = {
@@ -606,7 +667,7 @@ const aboutPatternTuneControls = [
 ];
 
 function readAboutPatternTune() {
-  return { ...aboutPatternTuneDefaults };
+  return readStoredTune(aboutPatternTuneStorageKey, aboutPatternTuneDefaults);
 }
 
 function SignalModel({ navigate }) {
@@ -704,17 +765,12 @@ function SignalModel({ navigate }) {
     async function bootModel() {
       const mount = mountRef.current;
       if (!mount) return;
-      [
-        'signal-model-tune',
-        'signal-render-tune',
-        'blue-text-tune',
-        'contact-text-tune',
-        aboutPatternTuneStorageKey,
-      ].forEach((key) => window.localStorage.removeItem(key));
-
       function showModelError(message) {
         mount.classList.add('is-ready');
-        mount.insertAdjacentHTML('beforeend', `<p class="model-load-error">${message}</p>`);
+        const errorElement = document.createElement('p');
+        errorElement.className = 'model-load-error';
+        errorElement.textContent = message;
+        mount.appendChild(errorElement);
       }
 
       const THREE = await import('./vendor/three/three.module.js');
@@ -725,7 +781,7 @@ function SignalModel({ navigate }) {
       let renderer;
       try {
         const Renderer = THREE.WebGLRenderer || THREE.WebGL1Renderer;
-        renderer = new Renderer({ alpha: true, antialias: true });
+        renderer = new Renderer({ alpha: true, antialias: true, powerPreference: 'high-performance' });
         renderer.setPixelRatio(1);
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -769,7 +825,7 @@ function SignalModel({ navigate }) {
       let aboutPatternTextureTune = { ...aboutPatternTuneRef.current };
       const cameraRig = { enabled: false, target: new THREE.Vector3(0.02, 0.08, 0.08) };
       const animatedTextures = [];
-      const videoTextures = [];
+      const grainientTextures = [];
       const signalMaterials = [];
       const deferredJobs = [];
       const reducedMotionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
@@ -1235,136 +1291,420 @@ function SignalModel({ navigate }) {
         return texture;
       }
 
-      function hydrateMirrorVideoTexture(material) {
-        scheduleDeferredJob(() => {
-          if (!alive) return;
-          const video = document.createElement('video');
-          video.muted = true;
-          video.loop = false;
-          video.autoplay = true;
-          video.playsInline = true;
-          video.preload = 'auto';
-          video.crossOrigin = 'anonymous';
-          video.setAttribute('webkit-playsinline', '');
-          let mirrorVideoIndex = 0;
+      function hydrateMirrorGrainientTexture(material) {
+        const sourceCanvas = document.createElement('canvas');
+        sourceCanvas.width = 960;
+        sourceCanvas.height = 600;
+        const displayContext = sourceCanvas.getContext('2d', { alpha: false });
+        const grainCanvas = document.createElement('canvas');
+        grainCanvas.width = sourceCanvas.width;
+        grainCanvas.height = sourceCanvas.height;
+        const texture = new THREE.CanvasTexture(sourceCanvas);
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.flipY = false;
+        texture.minFilter = THREE.LinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        texture.generateMipmaps = false;
+        texture.anisotropy = 1;
 
-          function loadMirrorVideo(index) {
-            mirrorVideoIndex = (index + mirrorVideoSources.length) % mirrorVideoSources.length;
-            video.src = mirrorVideoSources[mirrorVideoIndex];
-            video.load();
+        const oldMap = material.map;
+        material.map = texture;
+        material.needsUpdate = true;
+        oldMap?.dispose?.();
+
+        const grainRenderer = new THREE.WebGLRenderer({
+          canvas: grainCanvas,
+          alpha: true,
+          antialias: false,
+          powerPreference: 'high-performance',
+        });
+        grainRenderer.outputColorSpace = THREE.SRGBColorSpace;
+        grainRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        grainRenderer.setSize(sourceCanvas.width, sourceCanvas.height, false);
+
+        const grainScene = new THREE.Scene();
+        const grainCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+        const grainUniforms = {
+          iResolution: { value: new THREE.Vector2(sourceCanvas.width, sourceCanvas.height) },
+          iTime: { value: 0 },
+          uTimeSpeed: { value: 2 },
+          uColorBalance: { value: -0.04 },
+          uWarpStrength: { value: 1 },
+          uWarpFrequency: { value: 5 },
+          uWarpSpeed: { value: 2 },
+          uWarpAmplitude: { value: 50 },
+          uBlendAngle: { value: 0 },
+          uBlendSoftness: { value: 0.05 },
+          uRotationAmount: { value: 500 },
+          uNoiseScale: { value: 2 },
+          uGrainAmount: { value: 0.1 },
+          uGrainScale: { value: 2 },
+          uGrainAnimated: { value: 0 },
+          uContrast: { value: 1.5 },
+          uGamma: { value: 1 },
+          uSaturation: { value: 1 },
+          uCenterOffset: { value: new THREE.Vector2(0, 0) },
+          uZoom: { value: 0.9 },
+          uColor1: { value: new THREE.Color('#FF9FFC') },
+          uColor2: { value: new THREE.Color('#5227FF') },
+          uColor3: { value: new THREE.Color('#B497CF') },
+        };
+        const grainMaterial = new THREE.ShaderMaterial({
+          uniforms: grainUniforms,
+          vertexShader: `
+            varying vec2 vUv;
+            void main() {
+              vUv = uv;
+              gl_Position = vec4(position.xy, 0.0, 1.0);
+            }
+          `,
+          fragmentShader: `
+            precision highp float;
+            uniform vec2 iResolution;
+            uniform float iTime;
+            uniform float uTimeSpeed;
+            uniform float uColorBalance;
+            uniform float uWarpStrength;
+            uniform float uWarpFrequency;
+            uniform float uWarpSpeed;
+            uniform float uWarpAmplitude;
+            uniform float uBlendAngle;
+            uniform float uBlendSoftness;
+            uniform float uRotationAmount;
+            uniform float uNoiseScale;
+            uniform float uGrainAmount;
+            uniform float uGrainScale;
+            uniform float uGrainAnimated;
+            uniform float uContrast;
+            uniform float uGamma;
+            uniform float uSaturation;
+            uniform vec2 uCenterOffset;
+            uniform float uZoom;
+            uniform vec3 uColor1;
+            uniform vec3 uColor2;
+            uniform vec3 uColor3;
+            #define S(a,b,t) smoothstep(a,b,t)
+            mat2 Rot(float a){float s=sin(a),c=cos(a);return mat2(c,-s,s,c);}
+            vec2 hash(vec2 p){p=vec2(dot(p,vec2(2127.1,81.17)),dot(p,vec2(1269.5,283.37)));return fract(sin(p)*43758.5453);}
+            float noise(vec2 p){
+              vec2 i=floor(p),f=fract(p),u=f*f*(3.0-2.0*f);
+              float n=mix(
+                mix(dot(-1.0+2.0*hash(i+vec2(0.0,0.0)),f-vec2(0.0,0.0)),dot(-1.0+2.0*hash(i+vec2(1.0,0.0)),f-vec2(1.0,0.0)),u.x),
+                mix(dot(-1.0+2.0*hash(i+vec2(0.0,1.0)),f-vec2(0.0,1.0)),dot(-1.0+2.0*hash(i+vec2(1.0,1.0)),f-vec2(1.0,1.0)),u.x),
+                u.y
+              );
+              return 0.5+0.5*n;
+            }
+            void main(){
+              float t=iTime*uTimeSpeed;
+              vec2 uv=gl_FragCoord.xy/iResolution.xy;
+              float ratio=iResolution.x/iResolution.y;
+              vec2 tuv=uv-0.5+uCenterOffset;
+              tuv/=max(uZoom,0.001);
+
+              float degree=noise(vec2(t*0.1,tuv.x*tuv.y)*uNoiseScale);
+              tuv.y*=1.0/ratio;
+              tuv*=Rot(radians((degree-0.5)*uRotationAmount+180.0));
+              tuv.y*=ratio;
+
+              float frequency=uWarpFrequency;
+              float ws=max(uWarpStrength,0.001);
+              float amplitude=uWarpAmplitude/ws;
+              float warpTime=t*uWarpSpeed;
+              tuv.x+=sin(tuv.y*frequency+warpTime)/amplitude;
+              tuv.y+=sin(tuv.x*(frequency*1.5)+warpTime)/(amplitude*0.5);
+
+              float b=uColorBalance;
+              float s=max(uBlendSoftness,0.0);
+              mat2 blendRot=Rot(radians(uBlendAngle));
+              float blendX=(tuv*blendRot).x;
+              float edge0=-0.3-b-s;
+              float edge1=0.2-b+s;
+              float v0=0.5-b+s;
+              float v1=-0.3-b-s;
+              vec3 layer1=mix(uColor3,uColor2,S(edge0,edge1,blendX));
+              vec3 layer2=mix(uColor2,uColor1,S(edge0,edge1,blendX));
+              vec3 col=mix(layer1,layer2,S(v0,v1,tuv.y));
+
+              vec2 grainUv=uv*max(uGrainScale,0.001);
+              if(uGrainAnimated>0.5){grainUv+=vec2(iTime*0.05);}
+              float grain=fract(sin(dot(grainUv,vec2(12.9898,78.233)))*43758.5453);
+              col+=(grain-0.5)*uGrainAmount;
+
+              col=(col-0.5)*uContrast+0.5;
+              float luma=dot(col,vec3(0.2126,0.7152,0.0722));
+              col=mix(vec3(luma),col,uSaturation);
+              col=pow(max(col,0.0),vec3(1.0/max(uGamma,0.001)));
+              col=clamp(col,0.0,1.0);
+              gl_FragColor=vec4(col,1.0);
+            }
+          `,
+          depthTest: false,
+          depthWrite: false,
+        });
+        const grainMesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), grainMaterial);
+        grainScene.add(grainMesh);
+
+        const textLoopConfig = {
+          text: '滚动 ✦ 滑轮',
+          shape: 'circle',
+          separator: '✦',
+          speed: 90,
+          ribbonColor: '#ffffff',
+          ribbonWidth: 86,
+          fontSize: 46,
+          fontWeight: 800,
+          letterSpacing: 2,
+          color: '#0000ff',
+          curviness: 90,
+        };
+
+        function makeInfinityPoints(width, height) {
+          const viewWidth = 1200;
+          const viewHeight = 520;
+          const scale = Math.min(width / viewWidth, height / viewHeight);
+          const centerX = width / 2;
+          const centerY = height / 2;
+          const radius = (150 + textLoopConfig.curviness * 1.4) * scale;
+          const loopHeight = Math.min(60 + textLoopConfig.curviness * 0.95, (viewHeight / 2 - textLoopConfig.ribbonWidth / 2 - 6)) * scale;
+          const points = [];
+
+          if (textLoopConfig.shape === 'circle') {
+            const room = Math.max(20, viewHeight / 2 - Math.max(0, textLoopConfig.ribbonWidth) / 2 - 6) * scale;
+            const circleRadius = Math.min(90 + textLoopConfig.curviness * 0.95, room);
+            for (let index = 0; index <= 720; index += 1) {
+              const theta = (index / 720) * Math.PI * 2;
+              points.push({
+                x: centerX + circleRadius * Math.cos(theta),
+                y: centerY + circleRadius * Math.sin(theta),
+              });
+            }
+            return points;
           }
 
-          const canvas = document.createElement('canvas');
-          canvas.width = 720;
-          canvas.height = 720;
-          const context = canvas.getContext('2d', { alpha: false });
-          const texture = new THREE.CanvasTexture(canvas);
-          texture.colorSpace = THREE.SRGBColorSpace;
-          texture.flipY = false;
-          texture.minFilter = THREE.LinearFilter;
-          texture.magFilter = THREE.LinearFilter;
-          texture.generateMipmaps = false;
-          texture.anisotropy = 1;
+          function cubic(p0, p1, p2, p3, t) {
+            const mt = 1 - t;
+            const mt2 = mt * mt;
+            const t2 = t * t;
+            return {
+              x: mt2 * mt * p0.x + 3 * mt2 * t * p1.x + 3 * mt * t2 * p2.x + t2 * t * p3.x,
+              y: mt2 * mt * p0.y + 3 * mt2 * t * p1.y + 3 * mt * t2 * p2.y + t2 * t * p3.y,
+            };
+          }
 
-          const oldMap = material.map;
-          material.map = texture;
-          material.needsUpdate = true;
-          oldMap?.dispose?.();
+          const segments = [
+            [
+              { x: centerX, y: centerY },
+              { x: centerX + radius * 0.55, y: centerY - loopHeight },
+              { x: centerX + radius, y: centerY - loopHeight },
+              { x: centerX + radius, y: centerY },
+            ],
+            [
+              { x: centerX + radius, y: centerY },
+              { x: centerX + radius, y: centerY + loopHeight },
+              { x: centerX + radius * 0.55, y: centerY + loopHeight },
+              { x: centerX, y: centerY },
+            ],
+            [
+              { x: centerX, y: centerY },
+              { x: centerX - radius * 0.55, y: centerY - loopHeight },
+              { x: centerX - radius, y: centerY - loopHeight },
+              { x: centerX - radius, y: centerY },
+            ],
+            [
+              { x: centerX - radius, y: centerY },
+              { x: centerX - radius, y: centerY + loopHeight },
+              { x: centerX - radius * 0.55, y: centerY + loopHeight },
+              { x: centerX, y: centerY },
+            ],
+          ];
 
-          let lastPaintTime = 0;
-          let lastVideoTime = -1;
-          let stalledFrames = 0;
-          let isSkippingVideo = false;
-
-          function paintVideoFrame(time) {
-            if (!alive || !context) return;
-            if (video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && time - lastPaintTime > 1 / 15) {
-              const videoWidth = video.videoWidth || canvas.width;
-              const videoHeight = video.videoHeight || canvas.height;
-              const videoRatio = videoWidth / videoHeight;
-              const canvasRatio = canvas.width / canvas.height;
-              let drawWidth = canvas.width;
-              let drawHeight = canvas.height;
-              if (videoRatio > canvasRatio) {
-                drawWidth = canvas.height * videoRatio;
-              } else {
-                drawHeight = canvas.width / videoRatio;
-              }
-              const dx = (canvas.width - drawWidth) / 2;
-              const dy = (canvas.height - drawHeight) / 2;
-              context.fillStyle = '#050505';
-              context.fillRect(0, 0, canvas.width, canvas.height);
-              try {
-                context.drawImage(video, 0, 0, videoWidth, videoHeight, dx, dy, drawWidth, drawHeight);
-              } catch {
-                playNextVideo();
-                return;
-              }
-              context.save();
-              context.globalAlpha = 0.58;
-              context.fillStyle = '#ffffff';
-              context.textAlign = 'center';
-              context.textBaseline = 'middle';
-              context.font = '600 100px "Arial Narrow", "Helvetica Neue Condensed", "Roboto Condensed", Arial, sans-serif';
-              context.fillText('404', canvas.width / 2, canvas.height / 2 - 34);
-              context.globalAlpha = 0.72;
-              context.font = '400 20px "Helvetica Neue", Arial, sans-serif';
-              context.fillText('The path may be broken, but the', canvas.width / 2, canvas.height / 2 + 48);
-              context.fillText("journey isn't. Let's get you back.", canvas.width / 2, canvas.height / 2 + 76);
-              context.restore();
-              texture.needsUpdate = true;
-              lastPaintTime = time;
-
-              if (Math.abs(video.currentTime - lastVideoTime) < 0.001) {
-                stalledFrames += 1;
-              } else {
-                stalledFrames = 0;
-                lastVideoTime = video.currentTime;
-              }
-
-              if (stalledFrames > 45 && !video.paused) {
-                stalledFrames = 0;
-                video.currentTime = Math.min(video.duration || video.currentTime + 0.04, video.currentTime + 0.04);
-                video.play().catch(() => {});
-              }
+          for (const segment of segments) {
+            for (let index = 0; index <= 180; index += 1) {
+              if (points.length && index === 0) continue;
+              points.push(cubic(segment[0], segment[1], segment[2], segment[3], index / 180));
             }
           }
+          return points;
+        }
 
-          animatedTextures.push(paintVideoFrame);
+        const textLoopPoints = makeInfinityPoints(sourceCanvas.width, sourceCanvas.height);
+        const textLoopLengths = textLoopPoints.reduce((lengths, point, index) => {
+          if (index === 0) return [0];
+          const previous = textLoopPoints[index - 1];
+          const distance = Math.hypot(point.x - previous.x, point.y - previous.y);
+          lengths.push(lengths[index - 1] + distance);
+          return lengths;
+        }, []);
+        const textLoopLength = textLoopLengths[textLoopLengths.length - 1] || 1;
 
-          function playVideo() {
-            return video.play().catch(() => {
-              const playOnFirstGesture = () => {
-                video.play().catch(() => {});
-                window.removeEventListener('pointerdown', playOnFirstGesture);
-                window.removeEventListener('keydown', playOnFirstGesture);
-              };
-              window.addEventListener('pointerdown', playOnFirstGesture, { once: true });
-              window.addEventListener('keydown', playOnFirstGesture, { once: true });
+        function getTextLoopPoint(distance) {
+          const wrapped = ((distance % textLoopLength) + textLoopLength) % textLoopLength;
+          let low = 0;
+          let high = textLoopLengths.length - 1;
+          while (low < high) {
+            const middle = Math.floor((low + high) / 2);
+            if (textLoopLengths[middle] < wrapped) low = middle + 1;
+            else high = middle;
+          }
+          const index = Math.max(1, low);
+          const previousLength = textLoopLengths[index - 1];
+          const nextLength = textLoopLengths[index];
+          const t = nextLength === previousLength ? 0 : (wrapped - previousLength) / (nextLength - previousLength);
+          const previous = textLoopPoints[index - 1];
+          const next = textLoopPoints[index];
+          return {
+            x: previous.x + (next.x - previous.x) * t,
+            y: previous.y + (next.y - previous.y) * t,
+            angle: Math.atan2(next.y - previous.y, next.x - previous.x),
+          };
+        }
+
+        function drawTextLoop(elapsed) {
+          if (!displayContext) return;
+          const ctx = displayContext;
+          const width = sourceCanvas.width;
+          const height = sourceCanvas.height;
+          const loopWidth = Math.min(width, height * (1200 / 520));
+          const loopHeight = loopWidth * (520 / 1200);
+          const scale = loopWidth / 1200;
+          const offsetX = (width - loopWidth) / 2;
+          const offsetY = (height - loopHeight) / 2;
+          const localPoints = makeInfinityPoints(loopWidth, loopHeight).map((point) => ({
+            x: point.x + offsetX,
+            y: point.y + offsetY,
+          }));
+          const fontSize = textLoopConfig.fontSize * scale;
+
+          if (textLoopConfig.shape === 'circle') {
+            const centerX = width / 2;
+            const centerY = height / 2;
+            const ringRadius = Math.min(loopWidth, loopHeight) * 0.34;
+            const ringWidth = textLoopConfig.ribbonWidth * scale;
+            const labels = ['滚动', '✦', '滑轮', '✦', '滚动', '✦', '滑轮', '✦', '滚动', '✦', '滑轮', '✦'];
+            const spin = -(elapsed * textLoopConfig.speed * 0.0025);
+
+            ctx.save();
+            ctx.strokeStyle = textLoopConfig.ribbonColor;
+            ctx.lineWidth = ringWidth;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, ringRadius, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+
+            ctx.save();
+            ctx.fillStyle = textLoopConfig.color;
+            ctx.font = `${textLoopConfig.fontWeight} ${fontSize}px "Microsoft YaHei", "Noto Sans SC", "PingFang SC", "Helvetica Neue", Arial, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            labels.forEach((label, index) => {
+              const angle = spin - Math.PI / 2 + (index / labels.length) * Math.PI * 2;
+              const x = centerX + Math.cos(angle) * ringRadius;
+              const y = centerY + Math.sin(angle) * ringRadius;
+              ctx.save();
+              ctx.translate(x, y);
+              ctx.rotate(angle + Math.PI / 2);
+              ctx.fillText(label, 0, 0);
+              ctx.restore();
             });
+            ctx.restore();
+            return;
           }
 
-          function playNextVideo() {
-            if (isSkippingVideo) return;
-            isSkippingVideo = true;
-            window.setTimeout(() => {
-              if (!alive) return;
-              loadMirrorVideo(mirrorVideoIndex + 1);
-              playVideo();
-              isSkippingVideo = false;
-            }, 180);
+          const localLengths = localPoints.reduce((lengths, point, index) => {
+            if (index === 0) return [0];
+            const previous = localPoints[index - 1];
+            lengths.push(lengths[index - 1] + Math.hypot(point.x - previous.x, point.y - previous.y));
+            return lengths;
+          }, []);
+          const localLength = localLengths[localLengths.length - 1] || 1;
+
+          function getLocalPoint(distance) {
+            const wrapped = ((distance % localLength) + localLength) % localLength;
+            let low = 0;
+            let high = localLengths.length - 1;
+            while (low < high) {
+              const middle = Math.floor((low + high) / 2);
+              if (localLengths[middle] < wrapped) low = middle + 1;
+              else high = middle;
+            }
+            const index = Math.max(1, low);
+            const previousLength = localLengths[index - 1];
+            const nextLength = localLengths[index];
+            const t = nextLength === previousLength ? 0 : (wrapped - previousLength) / (nextLength - previousLength);
+            const previous = localPoints[index - 1];
+            const next = localPoints[index];
+            return {
+              x: previous.x + (next.x - previous.x) * t,
+              y: previous.y + (next.y - previous.y) * t,
+              angle: Math.atan2(next.y - previous.y, next.x - previous.x),
+            };
           }
 
-          video.addEventListener('waiting', playVideo);
-          video.addEventListener('stalled', playVideo);
-          video.addEventListener('suspend', playVideo);
-          video.addEventListener('ended', playNextVideo);
-          video.addEventListener('error', playNextVideo);
-          loadMirrorVideo(0);
-          playVideo();
+          ctx.save();
+          ctx.strokeStyle = textLoopConfig.ribbonColor;
+          ctx.lineWidth = textLoopConfig.ribbonWidth * scale;
+          ctx.lineCap = 'round';
+          ctx.lineJoin = 'round';
+          ctx.beginPath();
+          localPoints.forEach((point, index) => {
+            if (index === 0) ctx.moveTo(point.x, point.y);
+            else ctx.lineTo(point.x, point.y);
+          });
+          ctx.closePath();
+          ctx.stroke();
+          ctx.restore();
 
-          videoTextures.push({ texture, video });
-        }, 3200);
+          const unit = textLoopConfig.text.includes(textLoopConfig.separator)
+            ? `${textLoopConfig.text}      `
+            : `${textLoopConfig.text}  ${textLoopConfig.separator}      `;
+          const letterGap = textLoopConfig.letterSpacing * scale;
+          const unitGap = fontSize * 1.8;
+          ctx.save();
+          ctx.fillStyle = textLoopConfig.color;
+          ctx.font = `${textLoopConfig.fontWeight} ${fontSize}px "Helvetica Neue", Arial, "Microsoft YaHei", sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+
+          const unitWidth = [...unit].reduce((widthSum, char) => widthSum + Math.max(ctx.measureText(char).width, fontSize * 0.72) + letterGap, 0) + unitGap;
+          const repeatCount = Math.ceil(localLength / Math.max(unitWidth, 1)) + 2;
+          let cursor = -(elapsed * textLoopConfig.speed * scale) % Math.max(unitWidth, 1);
+
+          for (let repeat = 0; repeat < repeatCount; repeat += 1) {
+            for (const char of unit) {
+              const charWidth = Math.max(ctx.measureText(char).width, fontSize * 0.72) + letterGap;
+              const point = getLocalPoint(cursor + charWidth / 2);
+              ctx.save();
+              ctx.translate(point.x, point.y);
+              ctx.rotate(point.angle);
+              ctx.fillText(char, 0, 0);
+              ctx.restore();
+              cursor += charWidth;
+            }
+            cursor += unitGap;
+          }
+          ctx.restore();
+        }
+
+        function paintGrainientFrame(elapsed) {
+          if (!alive) return;
+          grainUniforms.iTime.value = elapsed;
+          grainRenderer.render(grainScene, grainCamera);
+          if (displayContext) {
+            displayContext.drawImage(grainCanvas, 0, 0, sourceCanvas.width, sourceCanvas.height);
+            drawTextLoop(elapsed);
+          }
+          texture.needsUpdate = true;
+        }
+
+        animatedTextures.push(paintGrainientFrame);
+        grainientTextures.push({
+          renderer: grainRenderer,
+          texture,
+          geometry: grainMesh.geometry,
+          material: grainMaterial,
+        });
       }
 
       function decorateModel(rootObject) {
@@ -1409,7 +1749,7 @@ function SignalModel({ navigate }) {
                 toneMapped: false,
               });
               videoMaterial.name = material.name;
-              hydrateMirrorVideoTexture(videoMaterial);
+              hydrateMirrorGrainientTexture(videoMaterial);
               if (Array.isArray(object.material)) {
                 object.material[materialIndex] = videoMaterial;
               } else {
@@ -1747,11 +2087,12 @@ function SignalModel({ navigate }) {
         hdrSource?.dispose();
         hdrEnvironment?.dispose();
         pmremGenerator?.dispose();
-        videoTextures.forEach(({ texture, video }) => {
-          video.pause();
-          video.removeAttribute('src');
-          video.load();
+        grainientTextures.forEach(({ renderer, texture, geometry, material }) => {
           texture.dispose();
+          geometry.dispose();
+          material.dispose();
+          renderer.dispose();
+          renderer.forceContextLoss();
         });
         renderer.dispose();
         renderer.domElement.remove();
@@ -1879,11 +2220,29 @@ function SignalModel({ navigate }) {
 function Projects({ selected, setSelected, onBack, isEnteringFromHome }) {
   const [isWheelControlled, setIsWheelControlled] = useState(false);
   const [detailOrigin, setDetailOrigin] = useState(null);
+  const [activeCategory, setActiveCategory] = useState(null);
   const galleryRef = useRef(null);
   const trackRef = useRef(null);
   const wheelOffsetRef = useRef(0);
   const copy = projectCopy;
   const track = useMemo(() => [...projectsWithDetailImages, ...projectsWithDetailImages], []);
+  const categoryActions = [
+    { label: '电商设计', category: 'E-COMMERCE DESIGN' },
+    { label: '品牌设计', category: 'BRAND DESIGN' },
+    { label: 'AIGC视频', category: 'AIGC VIDEO' },
+  ];
+  const categoryProjects = useMemo(() => (
+    activeCategory ? projectsWithDetailImages.filter((item) => item.category === activeCategory) : []
+  ), [activeCategory]);
+  const carouselItems = useMemo(() => categoryProjects.map((item) => ({
+    image: item.image,
+    text: item.title,
+    project: item,
+  })), [categoryProjects]);
+  const openCategoryProject = useCallback((item) => {
+    setDetailOrigin(null);
+    setSelected(item.project);
+  }, [setSelected]);
 
   useEffect(() => {
     const galleryElement = galleryRef.current;
@@ -1926,7 +2285,12 @@ function Projects({ selected, setSelected, onBack, isEnteringFromHome }) {
     const trackElement = trackRef.current;
     wheelOffsetRef.current = 0;
     setIsWheelControlled(false);
+    setActiveCategory(null);
     if (trackElement) trackElement.style.transform = '';
+  }
+
+  function showCategory(category) {
+    setActiveCategory(category);
   }
 
   function openProject(item, event) {
@@ -1972,24 +2336,69 @@ function Projects({ selected, setSelected, onBack, isEnteringFromHome }) {
             ))}
           </h1>
         </div>
+        <div className="projects-specular-actions" aria-label="Project actions">
+          {categoryActions.map((action) => (
+            <SpecularButton
+              className={`projects-specular-button${activeCategory === action.category ? ' is-active' : ''}`}
+              size="md"
+              radius={18}
+              tint="#ffffff"
+              tintOpacity={0}
+              blur={0}
+              textColor="#0b0b0a"
+              lineColor="#94a3b8"
+              baseColor="#525252"
+              intensity={1}
+              shineSize={10}
+              shineFade={40}
+              thickness={1}
+              speed={0.35}
+              followMouse
+              proximity={250}
+              autoAnimate={false}
+              onClick={() => showCategory(action.category)}
+              key={action.category}
+            >
+              {action.label}
+            </SpecularButton>
+          ))}
+        </div>
         <div className="projects-gl-gallery">
-          <div className="projects-marquee" ref={galleryRef} onMouseLeave={resumeGalleryMarquee}>
-            <div ref={trackRef} className={`projects-marquee__track${isWheelControlled ? ' is-wheel-controlled' : ''}`}>
-              <div className="projects-marquee__set">
-                {track.map((item, index) => (
-                  <button className={`projects-marquee__item projects-marquee__item--${item.slug}`} type="button" key={`${item.slug}-${index}`} onClick={(event) => openProject(item, event)}>
-                    <figure className="projects-marquee__figure">
-                      <img src={item.image} alt="" loading="lazy" decoding="async" />
-                    </figure>
-                    <span className="projects-gl-caption">
-                      <span>{item.category}</span>
-                      <strong>{item.title}</strong>
-                    </span>
-                  </button>
-                ))}
+          {activeCategory ? (
+            <div className="projects-circular-showcase">
+              <Suspense fallback={<div className="projects-circular-fallback" aria-label="Loading project gallery" />}>
+                <CircularGallery
+                  items={carouselItems}
+                  bend={1}
+                  textColor="#ffffff"
+                  borderRadius={0.05}
+                  scrollEase={0.05}
+                  fontUrl=""
+                  font="bold 30px Orbitron"
+                  scrollSpeed={2}
+                  onItemClick={openCategoryProject}
+                />
+              </Suspense>
+            </div>
+          ) : (
+            <div className="projects-marquee" ref={galleryRef} onMouseLeave={resumeGalleryMarquee}>
+              <div ref={trackRef} className={`projects-marquee__track${isWheelControlled ? ' is-wheel-controlled' : ''}`}>
+                <div className="projects-marquee__set">
+                  {track.map((item, index) => (
+                    <button className={`projects-marquee__item projects-marquee__item--${item.slug}`} type="button" key={`${item.slug}-${index}`} onClick={(event) => openProject(item, event)}>
+                      <figure className="projects-marquee__figure">
+                        <img src={item.image} alt="" loading="lazy" decoding="async" />
+                      </figure>
+                      <span className="projects-gl-caption">
+                        <span>{item.category}</span>
+                        <strong>{item.title}</strong>
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </section>
@@ -2052,7 +2461,11 @@ function ProjectDetail({ project, openOrigin, onClose, onSelect }) {
       <div className="projects-zoom__content reveal">
         <span>{project.category}</span>
         <h2>{project.title}</h2>
-        <p>{project.description}</p>
+        <div className="projects-zoom__description">
+          {project.description.split(/\n\s*\n/).map((paragraph) => (
+            <p key={paragraph}>{paragraph}</p>
+          ))}
+        </div>
         <dl>
           <div>
             <dt>Statement</dt>
@@ -2078,7 +2491,7 @@ function ProjectDetail({ project, openOrigin, onClose, onSelect }) {
       <figure
         ref={imageRef}
         style={imageMotionStyle || undefined}
-        className={`projects-zoom__image${hasDetailGallery ? ' projects-zoom__image--gallery' : ''}${project.slug === 'project-07' || project.slug === 'project-08' ? ' projects-zoom__image--poster-flow' : ''}${imageMotionStyle ? ' projects-zoom__image--opening' : ''}`}
+        className={`projects-zoom__image${hasDetailGallery ? ' projects-zoom__image--gallery' : ''}${project.slug === 'project-07' || project.slug === 'project-08' ? ' projects-zoom__image--poster-flow' : ''}${project.slug === 'project-09' || project.slug === 'project-10' ? ' projects-zoom__image--vertical-flow' : ''}${imageMotionStyle ? ' projects-zoom__image--opening' : ''}`}
       >
         {hasDetailGallery ? (
           <div className="projects-detail-gallery">
