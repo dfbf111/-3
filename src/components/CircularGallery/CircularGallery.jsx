@@ -15,6 +15,12 @@ function lerp(p1, p2, t) {
   return p1 + (p2 - p1) * t;
 }
 
+function getEventPoint(event) {
+  const point = event.changedTouches?.[0] || event.touches?.[0] || event;
+  if (!Number.isFinite(point.clientX) || !Number.isFinite(point.clientY)) return null;
+  return { x: point.clientX, y: point.clientY };
+}
+
 function autoBind(instance) {
   const proto = Object.getPrototypeOf(instance);
   Object.getOwnPropertyNames(proto).forEach((key) => {
@@ -449,23 +455,27 @@ class CircularGalleryApp {
     this.isDown = true;
     this.wasDragged = false;
     this.scroll.position = this.scroll.current;
-    this.start = event.touches ? event.touches[0].clientX : event.clientX;
+    this.pointerPoint = getEventPoint(event);
+    this.start = this.pointerPoint?.x ?? 0;
   }
 
   onTouchMove(event) {
     if (!this.isDown) return;
-    const x = event.touches ? event.touches[0].clientX : event.clientX;
+    this.pointerPoint = getEventPoint(event) || this.pointerPoint;
+    const x = this.pointerPoint?.x ?? this.start;
     const distancePx = this.start - x;
     if (Math.abs(distancePx) > 6) this.wasDragged = true;
     this.scroll.target = this.scroll.position + distancePx * (this.scrollSpeed * 0.025);
   }
 
-  onTouchUp() {
+  onTouchUp(event) {
     if (!this.isDown) return;
     const shouldOpen = !this.wasDragged;
+    const point = getEventPoint(event) || this.pointerPoint;
     this.isDown = false;
+    this.pointerPoint = null;
     this.onCheck();
-    if (shouldOpen) this.openCenteredItem();
+    if (shouldOpen) this.openItemAtPoint(point);
   }
 
   onWheel(event) {
@@ -514,6 +524,43 @@ class CircularGalleryApp {
       Math.abs(media.plane.position.x) < Math.abs(best.plane.position.x) ? media : best
     ));
     this.onItemClick(centered.data);
+  }
+
+  openItemAtPoint(point) {
+    if (!point || !this.medias?.length || !this.onItemClick) {
+      this.openCenteredItem();
+      return;
+    }
+
+    const rect = this.container.getBoundingClientRect();
+    const viewportPoint = {
+      x: ((point.x - rect.left) / rect.width - 0.5) * this.viewport.width,
+      y: (0.5 - (point.y - rect.top) / rect.height) * this.viewport.height,
+    };
+
+    const hit = this.medias
+      .filter((media) => {
+        const halfWidth = media.plane.scale.x / 2;
+        const halfHeight = media.plane.scale.y / 2;
+        const dx = Math.abs(viewportPoint.x - media.plane.position.x);
+        const dy = Math.abs(viewportPoint.y - media.plane.position.y);
+        return dx <= halfWidth && dy <= halfHeight;
+      })
+      .sort((a, b) => {
+        const aDistance = Math.hypot(viewportPoint.x - a.plane.position.x, viewportPoint.y - a.plane.position.y);
+        const bDistance = Math.hypot(viewportPoint.x - b.plane.position.x, viewportPoint.y - b.plane.position.y);
+        return aDistance - bDistance;
+      })[0];
+
+    this.onItemClick((hit || this.findNearestItem(viewportPoint)).data);
+  }
+
+  findNearestItem(viewportPoint) {
+    return this.medias.reduce((best, media) => {
+      const mediaDistance = Math.hypot(viewportPoint.x - media.plane.position.x, viewportPoint.y - media.plane.position.y);
+      const bestDistance = Math.hypot(viewportPoint.x - best.plane.position.x, viewportPoint.y - best.plane.position.y);
+      return mediaDistance < bestDistance ? media : best;
+    });
   }
 
   onResize() {

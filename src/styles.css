@@ -2334,8 +2334,8 @@ dd {
 
 @media (max-width: 620px) {
   :root {
-    --ui-gutter-x: 18px;
-    --ui-gutter-y: 18px;
+    --ui-gutter-x: 16px;
+    --ui-gutter-y: 16px;
     --text-title-x: 20px;
     --text-title-y: 26px;
     --text-eyebrow-size: 12px;
@@ -2353,6 +2353,7 @@ dd {
 
   .app {
     overflow: hidden auto;
+    min-height: 100svh;
   }
 
   .app--home {
@@ -2372,6 +2373,7 @@ dd {
     top: var(--text-nav-y);
     right: var(--text-nav-x);
     gap: var(--text-nav-gap);
+    z-index: 120;
   }
 
   .site-nav button {
@@ -2398,19 +2400,19 @@ dd {
 
   .signal-model {
     left: 50%;
-    top: 49%;
+    top: 47%;
     right: auto;
     bottom: auto;
-    width: min(132vw, 560px);
-    height: min(78svh, 680px);
+    width: min(142vw, 560px);
+    height: min(70svh, 620px);
     transform: translate(-50%, -50%);
     transform-origin: center center;
   }
 
   .signal-model__viewer {
     top: 50%;
-    width: min(150vw, calc(78svh * 16 / 9));
-    height: min(78svh, calc(150vw * 9 / 16));
+    width: min(160vw, calc(70svh * 16 / 9));
+    height: min(70svh, calc(160vw * 9 / 16));
     transform: translate(-50%, -50%);
   }
 
@@ -2460,7 +2462,10 @@ dd {
 
   .projects-gridzoom {
     --projects-grid-padding-x: 18px;
-    padding: 18px;
+    min-height: 100svh;
+    height: auto;
+    padding: 18px 18px 28px;
+    overflow: hidden;
   }
 
   .home-meta,
@@ -2473,7 +2478,7 @@ dd {
     left: var(--text-meta-x);
     bottom: var(--text-meta-y);
     width: var(--text-meta-width);
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--text-meta-gap);
   }
 
@@ -2487,16 +2492,22 @@ dd {
     overflow-wrap: anywhere;
   }
 
+  .home-meta div:nth-child(2) {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
   .contact-page__content {
     width: min(100%, calc(100vw - 36px));
-    margin-top: 0;
+    margin-top: 76px;
   }
 
   .about-page__content {
     width: min(100%, calc(100vw - 36px));
-    max-height: calc(100svh - 116px);
-    margin-top: 72px;
-    overflow: hidden auto;
+    max-height: none;
+    margin-top: 76px;
+    padding-bottom: 28px;
+    overflow: visible;
   }
 
   .about-page__content .page-shell__intro {
@@ -2562,47 +2573,61 @@ dd {
   .contact-page__links a,
   .contact-page__wechat-trigger {
     font-size: clamp(18px, 5.3vw, 24px);
+    line-height: 1.12;
+    min-height: 44px;
   }
 
   .projects-gridzoom__intro {
     width: min(100%, calc(100vw - 36px));
-    top: 118px;
+    top: 132px;
   }
 
   .projects-gridzoom__intro h1 {
-    font-size: clamp(28px, 8.6vw, 38px);
-    line-height: 1.04;
+    max-width: calc(100vw - 54px);
+    font-size: clamp(22px, 6.4vw, 28px);
+    line-height: 1.12;
   }
 
   .projects-specular-actions {
-    left: 50%;
-    top: calc((118px + 92px + 38svh) / 2);
+    left: 18px;
+    right: 18px;
+    top: 326px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 8px;
-    max-width: calc(100vw - 36px);
+    max-width: none;
     overflow: visible;
+    transform: none;
   }
 
   .projects-specular-button {
     margin-top: 0;
-    min-height: 42px;
+    width: 100%;
+    min-height: 44px;
     min-width: 0;
-    padding: 13px 22px;
-    font-size: 11px;
+    padding: 12px 10px;
+    font-size: 10.5px;
   }
 
   .projects-gl-gallery {
-    top: 38svh;
-    height: 46svh;
+    top: 408px;
+    height: calc(100svh - 432px);
+    min-height: 270px;
   }
 
   .projects-gl-gallery:has(.projects-circular-showcase) {
-    --projects-circular-gallery-top: 32svh;
-    --projects-circular-gallery-height: 54svh;
+    --projects-circular-gallery-top: 392px;
+    --projects-circular-gallery-height: calc(100svh - 418px);
+    min-height: 280px;
+  }
+
+  .projects-circular-showcase {
+    inset: 0 -18px;
   }
 
   .projects-marquee__item {
-    width: min(68vw, 260px);
-    height: min(54vw, 205px);
+    width: min(72vw, 280px);
+    height: min(56vw, 218px);
   }
 
   .projects-marquee__item:nth-child(8n + 2),
@@ -2646,7 +2671,8 @@ dd {
 
   .projects-zoom {
     padding: 18px;
-    display: block;
+    display: flex;
+    flex-direction: column;
     overflow: hidden auto;
     -webkit-overflow-scrolling: touch;
   }
@@ -2656,23 +2682,42 @@ dd {
     left: 18px;
   }
 
+  .app--projects:has(.projects-zoom) .site-nav {
+    display: none;
+  }
+
   .projects-zoom__image {
+    order: 1;
     aspect-ratio: 16 / 10;
     width: 100%;
     max-height: none;
-    margin: 64px 0 0;
+    margin: 72px 0 0;
+    overflow: visible;
   }
 
   .projects-zoom__image--gallery {
     aspect-ratio: auto;
-    height: 56svh;
-    max-height: 56svh;
+    height: auto;
+    max-height: none;
+  }
+
+  .projects-detail-gallery {
+    height: auto;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    overflow: visible;
+  }
+
+  .projects-detail-gallery__image--wide,
+  .projects-detail-gallery__image--square {
+    grid-column: auto;
   }
 
   .projects-zoom__content {
+    order: 2;
     max-width: none;
-    margin: 18px 0 0;
-    padding-bottom: 28px;
+    margin: 22px 0 0;
+    padding-bottom: 34px;
   }
 
   .projects-zoom__content > span {
@@ -2682,8 +2727,8 @@ dd {
 
   .projects-zoom__content h2 {
     max-width: none;
-    font-size: clamp(38px, 13vw, 58px);
-    line-height: 0.9;
+    font-size: clamp(34px, 12vw, 54px);
+    line-height: 0.92;
   }
 
   .projects-zoom__description p {
@@ -2697,6 +2742,7 @@ dd {
   }
 
   .projects-zoom__link {
+    flex: 1 1 144px;
     min-height: 44px;
     padding: 0 16px;
     font-size: 12px;
@@ -2713,6 +2759,14 @@ dd {
   .portrait-lightbox__figure {
     max-width: calc(100vw - 32px);
     max-height: calc(100svh - 72px);
+  }
+
+  .portrait-lightbox__close,
+  .video-lightbox__close {
+    top: -12px;
+    right: -12px;
+    width: 44px;
+    height: 44px;
   }
 
   .video-lightbox__panel {
@@ -2738,17 +2792,27 @@ dd {
   }
 
   .signal-model {
-    top: 51%;
-    width: 152vw;
-    height: 76svh;
+    top: 48%;
+    width: 156vw;
+    height: 68svh;
   }
 
   .projects-gridzoom__intro {
-    top: 108px;
+    top: 126px;
   }
 
   .projects-gl-gallery {
-    top: 36svh;
+    top: 398px;
+    height: calc(100svh - 422px);
+  }
+
+  .projects-specular-actions {
+    top: 318px;
+  }
+
+  .projects-gl-gallery:has(.projects-circular-showcase) {
+    --projects-circular-gallery-top: 384px;
+    --projects-circular-gallery-height: calc(100svh - 410px);
   }
 }
 
