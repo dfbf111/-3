@@ -323,6 +323,12 @@ function attachProject10Gallery(project) {
   };
 }
 
+function makeProjectThumbnail(imagePath) {
+  const cleanPath = imagePath.split('?')[0];
+  const fileName = cleanPath.split('/').pop();
+  return fileName?.startsWith('project-') ? `/assets/thumbs/${fileName.replace(/\.png$/i, '.webp')}` : cleanPath;
+}
+
 const projectsWithDetailImages = projects.map((project) => (
   project.slug === 'signal-pole'
     ? attachDetailGallery(project, amazonDetailGroupB)
@@ -345,7 +351,10 @@ const projectsWithDetailImages = projects.map((project) => (
     : project.slug === 'project-10'
     ? attachProject10Gallery(project)
     : project
-));
+)).map((project) => ({
+  ...project,
+  thumbnail: makeProjectThumbnail(project.image),
+}));
 
 function routeFromPath(pathname) {
   if (pathname === pages.projects) return 'projects';
@@ -775,7 +784,6 @@ function SignalModel({ navigate }) {
 
       const THREE = await import('./vendor/three/three.module.js');
       const { GLTFLoader } = await import('./vendor/three/addons/loaders/GLTFLoader.js');
-      const { RGBELoader } = await import('./vendor/three/addons/loaders/RGBELoader.js');
       if (!alive || !mountRef.current) return;
 
       let renderer;
@@ -829,7 +837,10 @@ function SignalModel({ navigate }) {
       const signalMaterials = [];
       const deferredJobs = [];
       const reducedMotionQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+      const coarsePointerQuery = window.matchMedia?.('(pointer: coarse)');
+      const prefersReducedData = navigator.connection?.saveData || /(^|-)2g$/.test(navigator.connection?.effectiveType || '');
       let frameId = 0;
+      let lastTextureUpdate = 0;
       let hangPivot = null;
       let spinGroup = null;
       let modelObject = null;
@@ -840,6 +851,8 @@ function SignalModel({ navigate }) {
       let projectsSignMesh = null;
       let contactBallMesh = null;
       let aboutTriangleMesh = null;
+      let pointerMoveFrame = 0;
+      let pendingPointerPoint = null;
       const projectCursorBadge = document.querySelector('.project-cursor-badge');
       const contactCursorBadge = document.querySelector('.contact-cursor-badge');
       const aboutCursorBadge = document.querySelector('.about-cursor-badge');
@@ -869,6 +882,7 @@ function SignalModel({ navigate }) {
 
       async function loadHdrEnvironment() {
         try {
+          const { RGBELoader } = await import('./vendor/three/addons/loaders/RGBELoader.js');
           pmremGenerator = new THREE.PMREMGenerator(renderer);
           pmremGenerator.compileEquirectangularShader();
           hdrSource = await new RGBELoader().loadAsync('/assets/environment/city.hdr');
@@ -1129,7 +1143,10 @@ function SignalModel({ navigate }) {
           patternMask = buildPatternMask(image);
           draw(aboutPatternTextureTune);
         };
-        image.src = '/assets/about-pattern-source.png?v=20260811-about-centered-logo-v4';
+        const patternLoadId = window.setTimeout(() => {
+          if (alive) image.src = '/assets/about-pattern-source.png?v=20260811-about-centered-logo-v4';
+        }, 4500);
+        deferredJobs.push({ type: 'timeout', id: patternLoadId });
 
         function buildPatternMask(sourcePattern) {
           const temp = document.createElement('canvas');
@@ -1855,7 +1872,10 @@ function SignalModel({ navigate }) {
         if (cameraRig.enabled) {
           activeCamera.lookAt(cameraRig.target);
         }
-        animatedTextures.forEach((update) => update(time));
+        if (!reducedMotionQuery?.matches && time - lastTextureUpdate > 1 / 30) {
+          animatedTextures.forEach((update) => update(time));
+          lastTextureUpdate = time;
+        }
         const active = Math.floor(time * 1.25) % 3;
         const colors = ['#ff8060', '#fff2a8', '#b9e8ff'];
         signalMaterials.forEach((material, index) => {
@@ -1880,19 +1900,21 @@ function SignalModel({ navigate }) {
         startFrame();
       }
 
-      function onPointerMove(event) {
+      function processPointerMove(point) {
+        pointerMoveFrame = 0;
+        if (!point) return;
         const rect = renderer.domElement.getBoundingClientRect();
-        pointer.x = (event.clientX - rect.left) / rect.width - 0.5;
-        pointer.y = (event.clientY - rect.top) / rect.height - 0.5;
+        pointer.x = (point.clientX - rect.left) / rect.width - 0.5;
+        pointer.y = (point.clientY - rect.top) / rect.height - 0.5;
         if (dragState.active) {
-          const dx = event.clientX - dragState.startX;
-          const dy = event.clientY - dragState.startY;
+          const dx = point.clientX - dragState.startX;
+          const dy = point.clientY - dragState.startY;
           if (Math.abs(dx) > 2 || Math.abs(dy) > 2) dragState.moved = true;
           dragState.tiltZ = THREE.MathUtils.clamp(dx / rect.width * 1.25, -0.42, 0.42);
           dragState.tiltX = THREE.MathUtils.clamp(dy / rect.height * 0.55, -0.22, 0.22);
         }
-        rayPointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-        rayPointer.y = -(((event.clientY - rect.top) / rect.height) * 2 - 1);
+        rayPointer.x = ((point.clientX - rect.left) / rect.width) * 2 - 1;
+        rayPointer.y = -(((point.clientY - rect.top) / rect.height) * 2 - 1);
         raycaster.setFromCamera(rayPointer, activeCamera);
         const isOverProjects = isFrontFacingHit(projectsSignMesh);
         const isOverContact = isFrontFacingHit(contactBallMesh, {
@@ -1904,16 +1926,26 @@ function SignalModel({ navigate }) {
           minDot: 0.16,
         });
         [projectCursorBadge, contactCursorBadge, aboutCursorBadge].forEach((badge) => {
-          badge?.style.setProperty('--cursor-x', `${event.clientX}px`);
-          badge?.style.setProperty('--cursor-y', `${event.clientY}px`);
+          badge?.style.setProperty('--cursor-x', `${point.clientX}px`);
+          badge?.style.setProperty('--cursor-y', `${point.clientY}px`);
         });
         projectCursorBadge?.classList.toggle('is-visible', isOverProjects && !isOverContact && !isOverAbout);
         contactCursorBadge?.classList.toggle('is-visible', isOverContact);
         aboutCursorBadge?.classList.toggle('is-visible', isOverAbout && !isOverContact);
       }
 
+      function onPointerMove(event) {
+        pendingPointerPoint = { clientX: event.clientX, clientY: event.clientY };
+        if (!pointerMoveFrame) {
+          pointerMoveFrame = requestAnimationFrame(() => processPointerMove(pendingPointerPoint));
+        }
+      }
+
       function onPointerLeave() {
         dragState.active = false;
+        cancelAnimationFrame(pointerMoveFrame);
+        pointerMoveFrame = 0;
+        pendingPointerPoint = null;
         projectCursorBadge?.classList.remove('is-visible');
         contactCursorBadge?.classList.remove('is-visible');
         aboutCursorBadge?.classList.remove('is-visible');
@@ -2005,8 +2037,12 @@ function SignalModel({ navigate }) {
         wheel.rotation += event.deltaY * 0.0018;
       }
 
+      const modelSource = coarsePointerQuery?.matches
+        ? '/assets/hirotos-original-model-web.glb?v=20260816-original-model-web'
+        : '/assets/hirotos-original-model.glb?v=20260816-original-model';
+
       new GLTFLoader().load(
-        '/assets/hirotos-original-model.glb?v=20260816-original-model',
+        modelSource,
         (gltf) => {
           try {
             if (!alive) return;
@@ -2061,11 +2097,14 @@ function SignalModel({ navigate }) {
       applyTune();
       applyRenderTune();
       resize();
-      scheduleDeferredJob(loadHdrEnvironment, 1800);
+      if (!coarsePointerQuery?.matches && !prefersReducedData) {
+        scheduleDeferredJob(loadHdrEnvironment, 1800);
+      }
       startFrame();
 
       cleanup = () => {
         cancelAnimationFrame(frameId);
+        cancelAnimationFrame(pointerMoveFrame);
         mount.removeEventListener('pointermove', onPointerMove);
         mount.removeEventListener('pointerdown', onPointerDown);
         mount.removeEventListener('pointerup', onPointerUp);
@@ -2235,7 +2274,7 @@ function Projects({ selected, setSelected, onBack, isEnteringFromHome }) {
     activeCategory ? projectsWithDetailImages.filter((item) => item.category === activeCategory) : []
   ), [activeCategory]);
   const carouselItems = useMemo(() => categoryProjects.map((item) => ({
-    image: item.image,
+    image: item.thumbnail,
     text: item.title,
     project: item,
   })), [categoryProjects]);
@@ -2387,7 +2426,7 @@ function Projects({ selected, setSelected, onBack, isEnteringFromHome }) {
                   {track.map((item, index) => (
                     <button className={`projects-marquee__item projects-marquee__item--${item.slug}`} type="button" key={`${item.slug}-${index}`} onClick={(event) => openProject(item, event)}>
                       <figure className="projects-marquee__figure">
-                        <img src={item.image} alt="" loading="lazy" decoding="async" />
+                        <img src={item.thumbnail} alt="" loading="lazy" decoding="async" />
                       </figure>
                       <span className="projects-gl-caption">
                         <span>{item.category}</span>
@@ -2500,21 +2539,22 @@ function ProjectDetail({ project, openOrigin, onClose, onSelect }) {
                 className={`projects-detail-gallery__image projects-detail-gallery__image--${image.layout}`}
                 src={image.src}
                 alt={`${project.title} detail ${index + 1}`}
-                loading={index < 2 ? 'eager' : 'lazy'}
+                loading={index === 0 ? 'eager' : 'lazy'}
                 decoding="async"
+                fetchPriority={index === 0 ? 'high' : 'low'}
                 key={image.src}
               />
             ))}
           </div>
         ) : (
-          <img src={detailImages[0].src} alt={project.title} decoding="async" />
+          <img src={detailImages[0].src} alt={project.title} decoding="async" fetchPriority="high" />
         )}
       </figure>
       <ol className="projects-zoom__map" aria-label="Project map">
         {projectsWithDetailImages.map((item) => (
           <li key={item.slug} className={item.slug === project.slug ? 'is-active' : ''}>
             <button type="button" aria-label={item.title} onClick={() => onSelect(item)}>
-              <img src={item.image} alt="" loading="lazy" decoding="async" />
+              <img src={item.thumbnail} alt="" loading="lazy" decoding="async" />
             </button>
           </li>
         ))}
@@ -2524,7 +2564,7 @@ function ProjectDetail({ project, openOrigin, onClose, onSelect }) {
           <button className="video-lightbox__backdrop" type="button" aria-label="Close video preview" onClick={() => setIsVideoOpen(false)} />
           <div className="video-lightbox__panel">
             {project.video ? (
-              <video src={project.video} controls autoPlay playsInline preload="metadata" />
+              <video src={project.video} controls autoPlay playsInline preload="none" />
             ) : (
               <div className="video-lightbox__empty">
                 <span>VIDEO FILE PENDING</span>

@@ -149,14 +149,16 @@ export default function SpecularButton({
       renderer.setSize(w + PAD * 2, h + PAD * 2);
       program.uniforms.uCenter.value = [(PAD + w / 2) * dpr, (PAD + h / 2) * dpr];
       program.uniforms.uHalfSize.value = [(w / 2) * dpr, (h / 2) * dpr];
+      ensureFrame();
     };
     const ro = new ResizeObserver(resize);
     ro.observe(btn);
-    resize();
 
+    const supportsHoverPointer = window.matchMedia?.('(hover: hover) and (pointer: fine)').matches ?? true;
     let pointerAngle = null;
     let proximityT = 0;
     const onPointerMove = (event) => {
+      if (!supportsHoverPointer && !propsRef.current.autoAnimate) return;
       const rect = btn.getBoundingClientRect();
       const cx = rect.left + rect.width / 2;
       const cy = rect.top + rect.height / 2;
@@ -174,8 +176,11 @@ export default function SpecularButton({
 
       const t = Math.max(0, 1 - dist / Math.max(propsRef.current.proximity, 1));
       proximityT = t * t * (3 - 2 * t);
+      ensureFrame();
     };
-    window.addEventListener('pointermove', onPointerMove);
+    if (supportsHoverPointer || propsRef.current.autoAnimate) {
+      window.addEventListener('pointermove', onPointerMove);
+    }
 
     let angle = 2.4;
     let idleAngle = 2.4;
@@ -186,7 +191,7 @@ export default function SpecularButton({
     const baseC = new Color();
 
     const update = (now) => {
-      raf = requestAnimationFrame(update);
+      raf = 0;
       const dt = Math.min((now - last) / 1000, 0.05);
       last = now;
       const p = propsRef.current;
@@ -211,8 +216,21 @@ export default function SpecularButton({
       program.uniforms.uShineFade.value = (p.shineFade * Math.PI) / 180;
       program.uniforms.uThickness.value = p.thickness * dpr;
       renderer.render({ scene: mesh });
+
+      if (p.autoAnimate || proximityT > 0.001 || bright > 0.001) {
+        raf = requestAnimationFrame(update);
+      }
     };
-    raf = requestAnimationFrame(update);
+
+    function ensureFrame() {
+      if (!raf) {
+        last = performance.now();
+        raf = requestAnimationFrame(update);
+      }
+    }
+
+    ensureFrame();
+    resize();
 
     return () => {
       cancelAnimationFrame(raf);
